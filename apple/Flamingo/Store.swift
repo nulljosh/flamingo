@@ -15,13 +15,15 @@ final class Store: ObservableObject {
         var done: [String: Double] = [:]
         var found: [String: Int] = [:]
     }
-    @Published var s: State { didSet { save() } }
+    @Published var s: State { didSet { if !qa { save() } } }
+    private var qa = false
     private let key = "flamingo.v1"
 
     init() {
         if let d = UserDefaults.standard.data(forKey: key), let v = try? JSONDecoder().decode(State.self, from: d) { s = v } else { s = State() }
         // QA hooks: launch arguments set state for screenshots
         let args = ProcessInfo.processInfo.arguments
+        qa = args.contains { $0.hasPrefix("-qa") }   // QA runs never overwrite the saved state
         if args.contains("-qaDark") { s.theme = "dark" }
         if args.contains("-qaLight") { s.theme = "light" }
         if args.contains("-qaVisited") { s.visited["shore-court-garage"] = 1; s.visited["ocean-beach"] = 1; s.done["m1-01"] = 1; s.found["cocaine-flamingos"] = 12 }

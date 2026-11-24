@@ -37,9 +37,11 @@ struct RootView: View {
                             .inspectorColumnWidth(min: 340, ideal: 380, max: 440)
                     }
                 }
+                .ignoresSafeArea(.container, edges: .bottom)
             if tab == .settings { SettingsView().transition(.opacity) }
             dock.padding(.bottom, 8)
         }
+        .background(Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.043, green: 0.09, blue: 0.133, alpha: 1) : UIColor(red: 0.81, green: 0.886, blue: 0.94, alpha: 1) }).ignoresSafeArea())
         .animation(.easeInOut(duration: 0.22), value: tab)
         .onAppear(perform: qa)
     }
@@ -86,7 +88,7 @@ struct RootView: View {
     private func qa() {
         let a = ProcessInfo.processInfo.arguments
         func arg(_ k: String) -> String? { a.firstIndex(of: k).flatMap { a.indices.contains($0 + 1) ? a[$0 + 1] : nil } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if arg("-qaTab") == "settings" { tab = .settings }
             if let z = arg("-qaZoom")?.split(separator: ",").compactMap({ Double($0) }), z.count == 3 {
                 let s = model.fitS * z[2]

@@ -88,6 +88,7 @@ struct MapScreen: View {
             .onAppear { setSize(geo.size, first: true) }
             .onChange(of: geo.size) { setSize($0, first: false) }
         }
+        .ignoresSafeArea(edges: .bottom)
         .background(Color(hex: "#cfe2f0").opacity(0.0001))
     }
 
@@ -181,7 +182,7 @@ struct MapLayer: View, Animatable {
                         .glass(Capsule())
                     }
                     .buttonStyle(.plain)
-                    .position(p)
+                    .position(x: min(max(p.x, CGFloat(r.short.count) * 4.6 + 44), size.width - CGFloat(r.short.count) * 4.6 - 44), y: p.y)
                     .accessibilityLabel("\(r.name), \(n.count) places")
                 } else if z < 3.4 {
                     Text(r.short.uppercased()).font(.system(size: 12, weight: .bold)).tracking(1.6).foregroundStyle(.secondary)

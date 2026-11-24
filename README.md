@@ -19,6 +19,16 @@ The unofficial map for GTA VI. Every named place in Leonida, all 91 story missio
 - **No spoilers.** Mission and chapter names stay hidden until you turn them on.
 - **Settings.** Choose light, dark or system appearance, place names, region colours, pin grouping, and which categories show.
 
+## iPhone and iPad
+`apple/` is a SwiftUI app that reads the same `leonida.json`. It has the same map, region cards, clusters, search and settings, with a floating glass dock: Liquid Glass on iOS 26, materials on iOS 17 and 18.
+
+<p align="center"><img src="docs/img/qa/ios-map-light.png" width="220" alt="iPhone: region cards"> <img src="docs/img/qa/ios-place-dark.png" width="220" alt="iPhone: a place card in dark mode"> <img src="docs/img/qa/ios-settings-light.png" width="220" alt="iPhone: settings"></p>
+
+```
+cd apple && xcodegen && xcodebuild -scheme Flamingo -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO PRODUCT_NAME=Flamingo build
+sh scripts/ios-shots.sh <booted-simulator-udid>   # 10 QA screenshots, light and dark
+```
+
 ## Run
 ```
 python3 -m http.server 8790 -d web     # then open http://localhost:8790/app/

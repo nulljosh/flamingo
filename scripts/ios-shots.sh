@@ -1,0 +1,27 @@
+#!/bin/sh
+# iOS QA screenshots from a booted simulator: sh scripts/ios-shots.sh <device-udid> [out-dir]
+# Each scene relaunches the app with QA launch arguments (see RootView.qa and Store.init).
+D=$1; OUT=${2:-docs/img/qa}; APP=com.nulljosh.flamingo
+mkdir -p "$OUT"
+shot() { # name, theme, args...
+  name=$1; theme=$2; shift 2
+  xcrun simctl ui "$D" appearance "$theme" >/dev/null 2>&1
+  xcrun simctl terminate "$D" $APP >/dev/null 2>&1
+  xcrun simctl launch "$D" $APP "$@" >/dev/null
+  sleep 7
+  xcrun simctl io "$D" screenshot --type=png "$OUT/ios-$name-$theme.png" >/dev/null 2>&1 && echo "PASS ios-$name-$theme" || echo "FAIL ios-$name-$theme"
+}
+for t in light dark; do
+  T=-qaLight; [ $t = dark ] && T=-qaDark
+  # warm up: the first launch after an appearance change is slow
+  xcrun simctl ui "$D" appearance "$t" >/dev/null 2>&1; xcrun simctl launch "$D" $APP $T >/dev/null; sleep 8
+  shot map $t $T
+  shot vicecity $t $T -qaZoom 846,826,5.2
+  SIMCTL_CHILD_QA_QUERY=garage; export SIMCTL_CHILD_QA_QUERY
+  shot search $t $T -qaRoute search
+  unset SIMCTL_CHILD_QA_QUERY
+  shot place $t $T -qaVisited -qaRoute place/shore-court-garage
+  shot settings $t $T -qaVisited -qaTab settings
+done
+# the landing page shows these
+[ "$OUT" = docs/img/qa ] && for n in map place settings; do for t in light dark; do cp "$OUT/ios-$n-$t.png" "web/img/ios-$n-$t.png"; done; done && echo "landing iOS screenshots updated"

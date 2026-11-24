@@ -6,7 +6,7 @@
 - Landing page built from the QA screenshots
 
 ## Next
-1. iPhone and iPad app in SwiftUI, from the same JSON. TabView with Map and Settings tabs plus a search role. Liquid Glass on iOS 26, materials on earlier versions
+1. iPhone and iPad: built (1.0.0). Next: iPad landscape pass with the inspector column, then a TestFlight build
 2. Mac app: the same target, with a sidebar on wide windows
 3. More places as the community maps fill in: Ammu-Nations (24), stunt jumps, shipwrecks with coordinates
 4. A Swift port of search that agrees with `search.js` on shared vectors

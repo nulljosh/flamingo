@@ -37,7 +37,8 @@
   /* the app, shown rather than described: real QA screenshots in phone frames */
   .phones { display: flex; justify-content: center; align-items: flex-end; gap: clamp(12px, 3vw, 36px); max-width: 1040px; margin: 0 auto; }
   .phone { flex: 0 1 300px; border-radius: 46px; padding: 9px; background: #1d1d1f; box-shadow: 0 30px 70px rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .06); }
-  .phone img { display: block; width: 100%; height: auto; border-radius: 37px; aspect-ratio: 390 / 844; object-fit: cover; background: var(--bg2); }
+  .phone img { display: block; width: 100%; height: auto; border-radius: 37px; aspect-ratio: 390 / 844; object-fit: cover; object-position: top; background: var(--bg2); }
+  #native .phone img { border-radius: 40px; }
   .phone:nth-child(2) { flex-basis: 330px; transform: translateY(-28px); }
   @media (prefers-color-scheme: dark) { .phone { background: #2c2c2e; box-shadow: 0 30px 70px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08); } }
   .cap { text-align: center; margin-top: 1.5rem; font-size: .875rem; color: var(--text2); }
@@ -127,6 +128,17 @@
   </div></div>
 </section>
 
+<section id="native" class="lp-reveal">
+  <h2 class="h2">Native on iPhone and iPad.</h2>
+  <p class="sub">Built in SwiftUI from the same data file, with Liquid Glass on iOS 26.</p>
+  <div class="phones">
+    <div class="phone"><picture><source srcset="img/ios-map-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-map-light.png" alt="The iPhone app: Leonida with a card for each region, and the glass tab bar" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-place-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-place-light.png" alt="The iPhone app: Shore Court Garage selected on the map, its card in a sheet" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-settings-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-settings-light.png" alt="The iPhone app: settings with progress, appearance and map options" loading="lazy"></picture></div>
+  </div>
+  <p class="cap">From the iOS simulator, iPhone 15 Pro.</p>
+</section>
+
 <section id="settings" class="lp-reveal">
   <div class="phones">
     <div class="phone"><picture><source srcset="img/phone-browse-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-browse-light.png" alt="Browse: categories as round icons, then the six regions" loading="lazy"></picture></div>
@@ -137,7 +149,7 @@
     <li><b>Your map, your way.</b> Hide categories, group pins, and choose light or dark.</li>
     <li><b>Stays on your device.</b> No account, nothing sent anywhere. Works offline.</li>
   </ul>
-  <p class="where">Free on the web. iPhone, iPad and Mac next. <a href="/app/">Open the map &rarr;</a></p>
+  <p class="where">Free on the web today. iPhone and iPad are built; the App Store and Mac come next. <a href="/app/">Open the map &rarr;</a></p>
   <p class="note">Unofficial fan project. Not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of Take-Two Interactive. Pins are approximate.</p>
 </section>
 </main>
