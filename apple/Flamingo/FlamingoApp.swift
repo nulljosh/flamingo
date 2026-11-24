@@ -49,7 +49,8 @@ struct RootView: View {
 
     @State private var detentValue: PresentationDetent = .height(340)
     private var detent: Binding<PresentationDetent> {
-        Binding(get: { model.route == .search ? .large : detentValue }, set: { detentValue = $0 })
+        Binding(get: { model.route == .search ? (model.peek ? .height(340) : .large) : detentValue },
+                set: { d in if model.route == .search { model.peek = d != .large } else { detentValue = d } })
     }
 
     private var dock: some View {
@@ -101,6 +102,7 @@ struct RootView: View {
                 let p = r.split(separator: "/").map(String.init)
                 switch p.first {
                 case "search": model.open(.search)
+                case "layers": model.open(.layers)
                 case "place": model.open(.place(p[1]))
                 case "region": model.open(.region(p[1]))
                 case "list": model.open(.list(p[1]))

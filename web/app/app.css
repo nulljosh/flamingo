@@ -27,6 +27,7 @@ button, input { font: inherit; color: inherit; background: none; border: 0; }
 button { cursor: pointer; }
 svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 :focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+[hidden] { display: none !important; }
 
 /* Liquid Glass: blur and saturate what is under it, a bright rim on top, a soft shadow below */
 .glass { background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(190%); backdrop-filter: blur(22px) saturate(190%);
@@ -247,3 +248,21 @@ body.on-settings #settings, body.on-story #story { opacity: 1; pointer-events: a
 .mini button { width: 34px; height: 34px; border-radius: 17px; background: var(--fill); display: grid; place-items: center; color: var(--pink-ink); }
 .mini button svg.i { width: 16px; height: 16px; stroke-width: 2.6; }
 .mini output { min-width: 5.2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; }
+
+/* ---------- layers ---------- */
+.lay-all { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.lay-all .act { height: 44px; font-size: 15px; }
+.row.layer-row .t small { display: flex; align-items: center; gap: 8px; }
+.row.layer-row .lbar { flex: 1; max-width: 120px; height: 4px; border-radius: 2px; background: var(--fill); overflow: hidden; }
+.row.layer-row .lbar i { display: block; height: 100%; background: var(--c); border-radius: inherit; }
+.row.layer-row.off .ic { background: var(--fill); color: var(--text3); }
+.row.layer-row.off .t b { color: var(--text2); }
+.layer-row .toggle input { pointer-events: none; }
+
+/* ---------- search results on the map ---------- */
+.pin.lettered svg { display: none; }
+.pin.lettered::before { content: attr(data-letter); font-size: 14px; font-weight: 800; }
+.row .letter { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-right: 8px; border-radius: 6px; background: var(--fill); color: var(--text2); font-size: 12px; font-weight: 700; vertical-align: 2px; }
+.act.showmap { width: 100%; margin: 4px 0 4px; height: 48px; }
+.sheet.full.peek { height: calc(40% + 0px); }
+@media (min-width: 900px) { .act.showmap { display: none; } .sheet.full.peek { height: calc(100% - 120px); } }

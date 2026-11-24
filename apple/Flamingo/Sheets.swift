@@ -14,6 +14,7 @@ struct SheetRoot: View {
     @ViewBuilder func screen(_ r: Route) -> some View {
         switch r {
         case .search: SearchScreen()
+        case .layers: LayersScreen()
         case .place(let id): PlaceScreen(place: D.places[id]!)
         case .region(let id): RegionScreen(region: D.regions[id]!)
         case .mission(let id): MissionScreen(mission: D.missions[id]!)
@@ -37,13 +38,17 @@ struct CloseButton: View {
 // rows
 struct PlaceRow: View {
     let p: Place
+    var letter: String? = nil
     @EnvironmentObject var store: Store
     var body: some View {
         NavigationLink(value: Route.place(p.id)) {
             HStack(spacing: 12) {
                 Badge(symbol: D.cats[p.cat]!.symbol, color: D.cats[p.cat]!.tint)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(p.name).lineLimit(1)
+                    HStack(spacing: 8) {
+                        if let letter { Text(letter).font(.caption.weight(.bold)).foregroundStyle(.secondary).frame(minWidth: 20, minHeight: 20).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 6, style: .continuous)) }
+                        Text(p.name).lineLimit(1)
+                    }
                     Text(D.where_(p)).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer()
@@ -134,7 +139,18 @@ struct SearchScreen: View {
                     let regions: [Region] = hits.compactMap { if case .region(let r) = $0 { r } else { nil } }
                     let missions: [Mission] = hits.compactMap { if case .mission(let m) = $0 { m } else { nil } }
                     let colls: [Collectible] = hits.compactMap { if case .collectible(let c) = $0 { c } else { nil } }
-                    if !places.isEmpty { Section("Places") { ForEach(places) { PlaceRow(p: $0) } } }
+                    let lettered = places.filter(\.pinned).prefix(26).map(\.id)
+                    if !lettered.isEmpty {
+                        Section {
+                            Button { model.peek = true; model.zoomTo(lettered.compactMap { D.places[$0] }, bottom: 440) } label: {
+                                Label("Show \(lettered.count) on the map", systemImage: "map").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48)
+                                    .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                            .listRowBackground(Color.clear).listRowInsets(EdgeInsets())
+                        }
+                    }
+                    if !places.isEmpty { Section("Places") { ForEach(places) { PlaceRow(p: $0, letter: lettered.firstIndex(of: $0.id).map { String(UnicodeScalar(65 + $0)!) }) } } }
                     if !regions.isEmpty { Section("Regions") { ForEach(regions) { RegionRow(r: $0) } } }
                     if !missions.isEmpty { Section("Missions") { ForEach(missions) { MissionRow(m: $0) } } }
                     if !colls.isEmpty { Section("Collectibles") { ForEach(colls) { CollectibleRow(c: $0) } } }
@@ -157,7 +173,19 @@ struct SearchScreen: View {
             .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 8)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { if ProcessInfo.processInfo.environment["QA_QUERY"].map({ q = $0 }) == nil { focused = true } }
+        .onAppear { if ProcessInfo.processInfo.environment["QA_QUERY"].map({ q = $0 }) == nil { focused = true }; updateHits() }
+        .onChange(of: q) { _ in updateHits(); model.peek = false }
+        .onChange(of: focused) { if $0 { model.peek = false } }
+    }
+}
+
+extension SearchScreen {
+    func updateHits() {
+        let ids: [String] = Search.run(q, spoilers: store.s.spoilers).compactMap { if case .place(let p) = $0, p.pinned { p.id } else { nil } }
+        model.hits = ids.isEmpty ? nil : Array(ids.prefix(26))
+        if ProcessInfo.processInfo.arguments.contains("-qaShowHits"), let h = model.hits {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { model.peek = true; model.zoomTo(h.compactMap { D.places[$0] }, bottom: 440) }
+        }
     }
 }
 
@@ -347,5 +375,52 @@ struct ListScreen: View {
     var subtitle: String {
         cat.id == "mission" ? "\(D.data.missions.filter { store.s.done[$0.id] != nil }.count) of \(D.data.missions.count) done"
             : cat.id == "collectible" ? "\(D.data.collectibles.count) sets" : "\(D.data.places.filter { $0.cat == cat.id }.count) in Leonida"
+    }
+}
+
+// Every category on the map with its count, how many you've visited, and a switch. Show all / Hide all on top.
+struct LayersScreen: View {
+    @EnvironmentObject var store: Store
+    var cats: [Category] { D.data.categories.filter { c in c.id != "people" && c.id != "vehicle" && D.pinned.contains { $0.cat == c.id } } }
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 14) {
+                    Header(symbol: "square.3.layers.3d", color: .pink, title: "Layers", sub: "\(cats.filter { !store.s.hidden.contains($0.id) }.count) of \(cats.count) categories on the map")
+                    HStack(spacing: 8) {
+                        wide("Show all") { store.s.hidden = [] }
+                        wide("Hide all") { store.s.hidden = cats.map(\.id) }
+                    }
+                }
+                .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+            }
+            Section {
+                ForEach(cats) { c in
+                    let items = D.pinned.filter { $0.cat == c.id }, seen = items.filter { store.s.visited[$0.id] != nil }.count
+                    Toggle(isOn: Binding(get: { !store.s.hidden.contains(c.id) }, set: { on in
+                        if on { store.s.hidden.removeAll { $0 == c.id } } else { store.s.hidden.append(c.id) }
+                    })) {
+                        HStack(spacing: 12) {
+                            Badge(symbol: c.symbol, color: store.s.hidden.contains(c.id) ? Color(uiColor: .systemGray3) : c.tint)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(c.name).foregroundStyle(store.s.hidden.contains(c.id) ? .secondary : .primary)
+                                HStack(spacing: 8) {
+                                    ProgressView(value: Double(seen), total: Double(max(1, items.count))).tint(c.tint).frame(maxWidth: 110)
+                                    Text("\(seen) / \(items.count) visited").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                                }
+                            }
+                        }
+                    }
+                    .tint(.green)
+                }
+            } header: { Text("Categories") } footer: { Text("Characters and vehicles show from their chips. The same switches live in Settings.") }
+        }
+        .listStyle(.insetGrouped).scrollContentBackground(.hidden)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { CloseButton() } }
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    func wide(_ t: String, _ f: @escaping () -> Void) -> some View {
+        Button(action: f) { Text(t).font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 44).foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }
+            .buttonStyle(.plain)
     }
 }

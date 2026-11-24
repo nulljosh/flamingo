@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum Route: Hashable, Identifiable {
-    case search, place(String), region(String), mission(String), collectible(String), list(String)
+    case search, layers, place(String), region(String), mission(String), collectible(String), list(String)
     var id: String { "\(self)" }
 }
 
@@ -14,6 +14,8 @@ final class MapModel: ObservableObject {
     @Published var selected: String?
     @Published var filter: String?
     @Published var route: Route?
+    @Published var hits: [String]?      // search matches, drawn as lettered pins while search is open
+    @Published var peek = false         // search sheet folded down to show the matches
     var size: CGSize = .zero
     var fitS: CGFloat = 1
     var sheetInset: CGFloat = 0
@@ -34,8 +36,8 @@ final class MapModel: ObservableObject {
         var c = c
         c.s = min(max(c.s, fitS * 0.7), fitS * 14)
         let W = D.data.size[0], H = D.data.size[1]
-        c.x = min(max(c.x, size.width / 2 - W * c.s), size.width / 2)
-        c.y = min(max(c.y, size.height / 2 - H * c.s), size.height / 2)
+        c.x = min(max(c.x, size.width * 0.2 - W * c.s), size.width * 0.8)
+        c.y = min(max(c.y, size.height * 0.2 - H * c.s), size.height * 0.8)
         return c
     }
     func go(_ c: Cam, animated: Bool = true) {
@@ -47,14 +49,15 @@ final class MapModel: ObservableObject {
         let cy = min(size.height * 0.3, size.height - sheetInset - 80)
         go(Cam(s: s, x: size.width / 2 - p.point.x * s, y: cy - p.point.y * s))
     }
-    func zoomTo(_ items: [Place]) {
+    func zoomTo(_ items: [Place], bottom: CGFloat = 140) {
         let ps = items.filter(\.pinned)
         guard !ps.isEmpty else { return }
         let xs = ps.map { $0.point.x }, ys = ps.map { $0.point.y }
         let x0 = xs.min()!, x1 = xs.max()!, y0 = ys.min()!, y1 = ys.max()!
         let pad: CGFloat = 80
-        let s = min((size.width - pad * 2) / max(30, x1 - x0), (size.height - pad * 2 - 140) / max(30, y1 - y0), fitS * 14)
-        go(Cam(s: s, x: size.width / 2 - (x0 + x1) / 2 * s, y: (size.height - 80) / 2 - (y0 + y1) / 2 * s))
+        let top: CGFloat = 110, avail = size.height - top - bottom
+        let s = min((size.width - pad * 2) / max(30, x1 - x0), (avail - pad) / max(30, y1 - y0), fitS * 14)
+        go(Cam(s: s, x: size.width / 2 - (x0 + x1) / 2 * s, y: top + avail / 2 - (y0 + y1) / 2 * s))
     }
     func zoom(_ f: CGFloat, at p: CGPoint) {
         let s = min(max(cam.s * f, fitS * 0.7), fitS * 14), k = s / cam.s
@@ -62,6 +65,7 @@ final class MapModel: ObservableObject {
     }
     func open(_ r: Route) {
         if case .place(let id) = r { selected = id; if let p = D.places[id] { focus(p) } } else { selected = nil }
+        if r != .search { hits = nil; peek = false }
         route = r
     }
 }
@@ -74,7 +78,7 @@ struct MapScreen: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                MapLayer(cam: model.cam, size: geo.size, selected: model.selected, filter: model.filter, st: store.s, fitS: model.fitS,
+                MapLayer(cam: model.cam, size: geo.size, selected: model.selected, filter: model.filter, hits: model.route == .search ? model.hits : nil, st: store.s, fitS: model.fitS,
                          tapPlace: { model.open(.place($0)) }, tapGroup: { model.zoomTo($0) })
                     .gesture(pan.simultaneously(with: pinch))
                     .onTapGesture(count: 2, coordinateSpace: .local) { model.zoom(2, at: $0) }
@@ -134,6 +138,7 @@ struct MapLayer: View, Animatable {
     let size: CGSize
     let selected: String?
     let filter: String?
+    let hits: [String]?
     let st: Store.State
     let fitS: CGFloat
     let tapPlace: (String) -> Void
@@ -163,7 +168,7 @@ struct MapLayer: View, Animatable {
 
     var body: some View {
         let z = cam.s / fitS
-        let overview = z < 1.45 && filter == nil && selected == nil
+        let overview = z < 1.45 && filter == nil && selected == nil && hits == nil
         let groups = overview ? [] : makeGroups()
         ZStack(alignment: .topLeading) {
             Canvas { ctx, _ in draw(&ctx, z: z) }
@@ -192,7 +197,7 @@ struct MapLayer: View, Animatable {
             labels(groups, z: z)
             ForEach(groups, id: \.key) { g in
                 if g.items.count == 1, let p = g.items.first {
-                    PinView(place: p, selected: p.id == selected, visited: st.visited[p.id] != nil)
+                    PinView(place: p, selected: p.id == selected, visited: st.visited[p.id] != nil, letter: hits?.firstIndex(of: p.id).map { String(UnicodeScalar(65 + $0)!) })
                         .position(g.at)
                         .onTapGesture { tapPlace(p.id) }
                         .accessibilityAddTraits(.isButton)
@@ -255,6 +260,7 @@ struct MapLayer: View, Animatable {
     struct Group { var at: CGPoint; var items: [Place]; var sel: Bool; var key: String { items.map(\.id).joined(separator: ",") } }
     func visible(_ p: Place) -> Bool {
         if p.id == selected { return true }
+        if let h = hits { return h.contains(p.id) }
         if let f = filter { return p.cat == f }
         if st.hidden.contains(p.cat) { return false }
         if st.hideVisited && st.visited[p.id] != nil { return false }
@@ -265,7 +271,7 @@ struct MapLayer: View, Animatable {
         var out: [Group] = []
         for p in list {
             let at = pt(p.point.x, p.point.y)
-            if st.cluster && p.id != selected, let i = out.firstIndex(where: { !$0.sel && abs($0.at.x - at.x) < 30 && abs($0.at.y - at.y) < 30 }) {
+            if st.cluster && hits == nil && p.id != selected, let i = out.firstIndex(where: { !$0.sel && abs($0.at.x - at.x) < 30 && abs($0.at.y - at.y) < 30 }) {
                 out[i].items.append(p)
             } else { out.append(Group(at: at, items: [p], sel: p.id == selected)) }
         }
@@ -306,9 +312,16 @@ struct PinView: View {
     let place: Place
     let selected: Bool
     let visited: Bool
+    var letter: String? = nil
     var body: some View {
         let cat = D.cats[place.cat]!
-        Badge(symbol: cat.symbol, color: cat.tint, size: 30)
+        Group {
+            if let letter {
+                Text(letter).font(.system(size: 14, weight: .heavy)).foregroundStyle(.white).frame(width: 30, height: 30).background(cat.tint, in: Circle())
+            } else {
+                Badge(symbol: cat.symbol, color: cat.tint, size: 30)
+            }
+        }
             .overlay(Circle().stroke(.white, lineWidth: 2))
             .background(Circle().fill(cat.tint.opacity(selected ? 0.3 : 0)).frame(width: 44, height: 44))
             .overlay(alignment: .bottomTrailing) {
@@ -359,11 +372,18 @@ struct Chips: View {
 struct Controls: View {
     @EnvironmentObject var model: MapModel
     var body: some View {
-        Button { model.go(model.fit()) } label: {
-            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+        VStack(spacing: 0) {
+            Button { model.filter = nil; model.open(.layers) } label: {
+                Image(systemName: "square.3.layers.3d").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Layers: choose what shows on the map")
+            Divider().frame(width: 28)
+            Button { model.go(model.fit()) } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Show all of Leonida")
         }
         .buttonStyle(.plain)
-        .glass(Circle())
-        .accessibilityLabel("Show all of Leonida")
+        .glass(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }

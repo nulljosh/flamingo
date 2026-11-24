@@ -38,6 +38,17 @@ for (const theme of ["light", "dark"]) {
   check((await page.locator(".plabel:not([hidden])").count()) > 3, `${theme}: labels show when zoomed in`)
   await shot(page, `phone-vicecity-${theme}`)
 
+  // layers: hide a category and its pins go; show all brings them back
+  await page.click("#layers"); await page.waitForTimeout(500)
+  check((await page.locator("[data-layer]").count()) >= 10, `${theme}: layers lists the categories`)
+  await shot(page, `phone-layers-${theme}`)
+  const before = await page.locator(".pin:not([hidden]), .cluster:not([hidden])").count()
+  await page.click("#hideAll"); await page.waitForTimeout(300)
+  check((await page.locator(".pin:not([hidden]), .cluster:not([hidden])").count()) === 0 || before === 0, `${theme}: hide all clears the map`)
+  await page.locator("[data-layer='safehouse']").click(); await page.waitForTimeout(200)
+  check((await page.getAttribute("[data-layer='safehouse']", "aria-checked")) === "true", `${theme}: one layer switches back on`)
+  await page.click("#showAll"); await page.waitForTimeout(200)
+  await page.click("#sClose"); await page.waitForTimeout(300)
   // search
   await page.click("#searchBtn"); await page.waitForTimeout(500)
   await shot(page, `phone-browse-${theme}`)
@@ -45,6 +56,13 @@ for (const theme of ["light", "dark"]) {
   const n = await page.locator("#sheetBody [data-place]").count()
   check(n >= 2, `${theme}: search "garage" finds garages`, `${n} results`)
   await shot(page, `phone-search-${theme}`)
+  check((await page.locator(".pin.lettered:not([hidden])").count()) >= 4, `${theme}: search results stay on the map as lettered pins`)
+  await page.click("#showHits"); await page.waitForTimeout(800)
+  check(await page.evaluate(() => document.querySelector("#sheet").classList.contains("peek")), `${theme}: Show on the map folds the sheet down`)
+  await shot(page, `phone-searchmap-${theme}`)
+  // checks what is drawn, not the attribute: a hidden pin must not render
+  const strays = await page.evaluate(() => [...document.querySelectorAll(".pin:not(.lettered), .cluster")].filter(b => b.getBoundingClientRect().width > 0).map(b => b.getAttribute("aria-label")))
+  check(strays.length === 0, `${theme}: only search matches show on the map`, strays.join(" | "))
 
   // a place card
   await page.locator("#sheetBody [data-place='shore-court-garage']").click(); await page.waitForTimeout(900)
@@ -105,7 +123,7 @@ await browser.close()
 // the landing page shows these exact screenshots
 if (!fails && out === "docs/img/qa") {
   const { copyFileSync } = await import("node:fs")
-  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "phone-story", "phone-checklist", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
+  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "phone-story", "phone-checklist", "phone-layers", "phone-searchmap", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
   console.log("landing screenshots updated in web/img")
 }
 console.log(fails ? `${fails} FAILED` : "ALL PASS")

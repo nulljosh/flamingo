@@ -18,6 +18,8 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
+const VERSION = "1.3.0"
+let hits = null   // place ids matching the search, shown as lettered pins while the search is open
 const KEY = "flamingo.v1"
 const DEF = { savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
 const st = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") } } catch { return { ...DEF } } })()
@@ -98,9 +100,9 @@ function fitView(pad = { t: 64, b: 104, l: 8, r: 8 }) {
 function clamp(v) {
   const { w, h } = size(), [W, H] = data.size
   v.s = Math.min(Math.max(v.s, fitS * .7), fitS * 14)
-  const mx = w * .5, my = h * .5
-  v.x = Math.min(Math.max(v.x, mx - W * v.s), w - mx + 0)
-  v.y = Math.min(Math.max(v.y, my - H * v.s), h - my)
+  // the map may slide until its edge reaches a fifth of the screen, so pins near the coast can clear the sheet
+  v.x = Math.min(Math.max(v.x, w * .2 - W * v.s), w * .8)
+  v.y = Math.min(Math.max(v.y, h * .2 - H * v.s), h * .8)
   return v
 }
 let raf = 0
@@ -228,6 +230,7 @@ const PRIORITY = ["district", "safehouse", "landmark", "race", "store", "busines
 const prio = p => PRIORITY.indexOf(p.cat)
 function visible(p) {
   if (p.id === selected) return true
+  if (hits) return hits.includes(p.id)
   if (filter) return p.cat === filter
   if (st.hidden.includes(p.cat)) return false
   if (st.hideVisited && st.visited[p.id]) return false
@@ -254,7 +257,7 @@ function render() {
   world.setAttribute("transform", `translate(${view.x},${view.y}) scale(${view.s})`)
   const z = view.s / fitS
   // zoomed out: one card per region instead of a cloud of pins
-  const overview = z < OVERVIEW && !filter && !selected
+  const overview = z < OVERVIEW && !filter && !selected && !hits
   mapEl.classList.toggle("streets-on", z > 3)
   for (const { r, d, c } of rlabels) {
     const t = `translate(${view.x + r.label[0] * view.s}px, ${view.y + r.label[1] * view.s}px) translate(-50%, -50%)`
@@ -267,7 +270,7 @@ function render() {
   const groups = []
   for (const p of list) {
     const [x, y] = pos(p)
-    const g = st.cluster && p.id !== selected && groups.find(g => !g.sel && Math.abs(g.x - x) < 30 && Math.abs(g.y - y) < 30)
+    const g = st.cluster && !hits && p.id !== selected && groups.find(g => !g.sel && Math.abs(g.x - x) < 30 && Math.abs(g.y - y) < 30)
     if (g) g.items.push(p); else groups.push({ x, y, items: [p], sel: p.id === selected })
   }
   const shown = new Set(), labels = [], boxesPins = []
@@ -277,6 +280,8 @@ function render() {
       const p = g.items[0], b = pinEl(p); shown.add(p.id)
       b.style.transform = `translate3d(${g.x}px, ${g.y}px, 0)`
       b.classList.toggle("sel", p.id === selected); b.classList.toggle("visited", !!st.visited[p.id])
+      const letter = hits ? String.fromCharCode(65 + hits.indexOf(p.id)) : ""
+      if (b.dataset.letter !== letter) { b.dataset.letter = letter; b.classList.toggle("lettered", !!letter) }
       b.hidden = false; boxesPins.push([g.x - 16, g.y - 16, g.x + 16, g.y + 16])
       if (st.labels && (z > 2.2 || p.cat === "district" && z > 1.35 || p.id === selected)) labels.push({ p, x: g.x, y: g.y })
     } else {
@@ -300,23 +305,25 @@ function render() {
   for (const [id, b] of pinEls) if (!shown.has(id)) b.hidden = true
   // labels right of their pin, skipped where they would collide
   const boxes = [], used = new Set()
-  const hits = (box, own) => boxesPins.some(b => !(own && b[0] === own[0] && b[1] === own[1]) && box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])
+  const overlapsPin = (box, own) => boxesPins.some(b => !(own && b[0] === own[0] && b[1] === own[1]) && box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])
   labels.sort((a, b) => (b.p.id === selected) - (a.p.id === selected) || prio(a.p) - prio(b.p))
   for (const { p, x, y } of labels) {
     const l = labelEl(p), w = (l._w ||= p.name.length * (p.cat === "district" ? 7.6 : 7) + 4)
     const box = [x + 20, y - 9, x + 20 + w, y + 9]
-    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) || hits(box, [x - 16, y - 16])) continue
+    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) || overlapsPin(box, [x - 16, y - 16])) continue
     boxes.push(box); used.add(p.id)
     l.style.transform = `translate3d(${x + 21}px, ${y - 9}px, 0)`; l.hidden = false
   }
   for (const [id, l] of labelEls) if (!used.has(id)) l.hidden = true
 }
-function zoomToItems(items) {
+function zoomToItems(items, bottom = 0) {
+  items = items.filter(p => p.x != null); if (!items.length) return
   const xs = items.map(p => p.x), ys = items.map(p => p.y)
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys)
-  const { w, h } = size(), pad = 90
-  const s = Math.min((w - pad * 2) / Math.max(30, x1 - x0), (h - pad * 2 - 120) / Math.max(30, y1 - y0), fitS * 14)
-  animateTo({ s, x: w / 2 - (x0 + x1) / 2 * s, y: (h - 60) / 2 - (y0 + y1) / 2 * s })
+  const { w, h } = size(), pad = 70, wide = w >= 900 && document.body.classList.contains("sheet-open")
+  const L = wide ? 410 : 0, top = 70, avail = h - top - (bottom || 110)
+  const s = Math.min((w - L - pad * 2) / Math.max(30, x1 - x0), (avail - pad) / Math.max(30, y1 - y0), fitS * 14)
+  animateTo({ s, x: L + (w - L) / 2 - (x0 + x1) / 2 * s, y: top + avail / 2 - (y0 + y1) / 2 * s })
 }
 
 // ---------- category chips ----------
@@ -338,20 +345,23 @@ const stack = []
 const top = () => stack[stack.length - 1]
 function push(v) { stack.push(v); showSheet() }
 function closeSheet() {
-  stack.length = 0; selected = null; sheet.classList.remove("open", "full"); document.body.classList.remove("sheet-open")
+  stack.length = 0; selected = null; hits = null; sheet.classList.remove("peek"); sheet.classList.remove("open", "full"); document.body.classList.remove("sheet-open")
   history.replaceState(null, "", location.pathname + location.search); queue()
 }
 function back() { stack.pop(); stack.length ? showSheet() : closeSheet() }
 function showSheet() {
   const v = top()
   sheet.classList.add("open"); document.body.classList.add("sheet-open")
-  sheet.classList.toggle("full", v.type === "search" || v.type === "list")
+  sheet.classList.toggle("full", v.type === "search" || v.type === "list" || v.type === "layers")
+  if (v.type !== "search") { hits = null; sheet.classList.remove("peek") }
   const backBtn = stack.length > 1 ? `<button class="round" id="sBack" aria-label="Back">${icon("back")}</button>` : ""
   const close = `<button class="round" id="sClose" aria-label="Close">${icon("close")}</button>`
   selected = v.type === "place" ? v.id : null
   if (v.type === "search") {
     head.innerHTML = `${backBtn}<label class="field">${icon("search")}<input id="q" type="search" placeholder="Search Leonida" autocomplete="off" spellcheck="false" enterkeyhint="search" value="${esc(v.q || "")}"></label>${close}`
     const q = $("#q"); q.oninput = () => { v.q = q.value; drawSearch(v) }
+    q.onfocus = () => sheet.classList.remove("peek")
+    q.onkeydown = e => { if (e.key === "Enter" && hits?.length) { q.blur(); showHits() } }
     if (v.focus) { v.focus = false; setTimeout(() => q.focus({ preventScroll: true }), 60) }
     drawSearch(v)
   } else {
@@ -362,6 +372,7 @@ function showSheet() {
     else if (v.type === "mission") drawMission(v)
     else if (v.type === "collectible") drawCollectible(v)
     else if (v.type === "list") drawList(v)
+    else if (v.type === "layers") drawLayers(v)
   }
   $("#sBack") && ($("#sBack").onclick = back)
   $("#sClose").onclick = closeSheet
@@ -382,7 +393,14 @@ const who = m => m.who.length ? m.who.join(" and ") : "Jason or Lucia"
 const where = p => [cat[p.cat].one, p.region ? region[p.region].name : "Location not known yet"].join(" · ")
 const row = (attrs, ic, color, title, sub, right = icon("chev").replace('class="i"', 'class="i chev"'), sq = false) =>
   `<button class="row" ${attrs}><span class="ic${sq ? " sq" : ""}" style="--c:${color}">${icon(ic)}</span><span class="t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span>${right}</button>`
-const placeRow = p => row(`data-place="${p.id}"`, p.cat, cat[p.cat].color, esc(p.name), esc(where(p)), st.visited[p.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
+const placeRow = (p, letter = "") => row(`data-place="${p.id}"`, p.cat, cat[p.cat].color, (letter ? `<span class="letter">${letter}</span>` : "") + esc(p.name), esc(where(p)), st.visited[p.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
+// fold the search sheet down and fit the lettered pins in the map above it
+function showHits() {
+  if (!hits) return
+  const wide = innerWidth >= 900
+  if (!wide) sheet.classList.add("peek")
+  zoomToItems(hits.map(id => place[id]), wide ? 110 : innerHeight * .4 + 110)
+}
 const missionRow = m => row(`data-mission="${m.id}"`, "mission", m.heist ? "#ff2d55" : "#8e8e93", esc(missionName(m)) + (m.heist ? " · Heist" : ""), esc(`${chapterName(m)} · ${who(m)}`), st.done[m.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
 const collRow = c => row(`data-coll="${c.id}"`, "collectible", "#ff9500", esc(c.name), `${st.found[c.id] || 0} of ${c.total} found`)
 function wire(root = body) {
@@ -405,18 +423,24 @@ function drawSearch(v) {
       <p class="fine">${esc(data.disclaimer)}</p>`
   } else {
     const res = search(data, v.q, { spoilers: st.spoilers })
+    hits = res.filter(r => r.kind === "place" && r.item.x != null).slice(0, 26).map(r => r.item.id)
+    if (!hits.length) hits = null
+    queue()
     if (!res.length) body.innerHTML = `<div class="empty"><b>No results</b>Nothing in Leonida matches “${esc(v.q)}”.${st.spoilers ? "" : "<br>Mission names are hidden. Turn on spoilers in Settings to search them."}</div>`
     else {
       const parts = { region: [], place: [], mission: [], collectible: [] }
       res.forEach(r => parts[r.kind].push(r.item))
       body.innerHTML = [
-        parts.place.length && `<p class="sec">Places</p><div class="group">${parts.place.map(placeRow).join("")}</div>`,
+        hits && `<button class="act wide showmap" id="showHits">${icon("map")}Show ${hits.length} on the map</button>`,
+        parts.place.length && `<p class="sec">Places</p><div class="group">${parts.place.map(p => placeRow(p, hits && hits.includes(p.id) ? String.fromCharCode(65 + hits.indexOf(p.id)) : "")).join("")}</div>`,
         parts.region.length && `<p class="sec">Regions</p><div class="group">${parts.region.map(r => row(`data-region="${r.id}"`, "region", r.color, esc(r.name), esc(r.inspiration), undefined, true)).join("")}</div>`,
         parts.mission.length && `<p class="sec">Missions</p><div class="group">${parts.mission.map(missionRow).join("")}</div>`,
         parts.collectible.length && `<p class="sec">Collectibles</p><div class="group">${parts.collectible.map(collRow).join("")}</div>`,
       ].filter(Boolean).join("")
+      $("#showHits") && ($("#showHits").onclick = showHits)
     }
   }
+  if (!q) { hits = null; queue() }
   wire()
 }
 function drawPlace(v) {
@@ -491,6 +515,24 @@ function drawList(v) {
   wire()
 }
 
+// the layers panel: every category on the map, its count and how many you've visited, one switch each
+const LAYER_CATS = () => mapCats.filter(c => c.id !== "people" && c.id !== "vehicle")
+function drawLayers(v) {
+  const cats = LAYER_CATS(), shown = cats.filter(c => !st.hidden.includes(c.id)).length
+  body.innerHTML = `<div class="ph"><span class="ic" style="--c:var(--pink)">${icon("layers")}</span><div><h2>Layers</h2><p>${shown} of ${cats.length} categories on the map</p></div></div>
+    <div class="lay-all"><button class="act" id="showAll">Show all</button><button class="act" id="hideAll">Hide all</button></div>
+    <p class="sec">Categories</p>
+    <div class="group">${cats.map(c => {
+      const items = pinned.filter(p => p.cat === c.id), seen = items.filter(p => st.visited[p.id]).length, on = !st.hidden.includes(c.id)
+      return `<button class="row layer-row${on ? "" : " off"}" data-layer="${c.id}" role="switch" aria-checked="${on}" style="--c:${c.color}"><span class="ic">${icon(c.id)}</span><span class="t"><b>${esc(c.name)}</b><small><span class="lbar"><i style="width:${items.length ? seen / items.length * 100 : 0}%"></i></span>${seen} / ${items.length} visited</small></span><span class="toggle" aria-hidden="true"><input type="checkbox" tabindex="-1"${on ? " checked" : ""}><span></span></span></button>`
+    }).join("")}</div>
+    <p class="fine">Characters and vehicles show from their chips. The same switches live in Settings.</p>`
+  body.querySelectorAll("[data-layer]").forEach(b => b.onclick = e => { e.preventDefault(); const id = b.dataset.layer; st.hidden = st.hidden.includes(id) ? st.hidden.filter(x => x !== id) : [...st.hidden, id]; save(); drawLayers(v); queue() })
+  $("#showAll").onclick = () => { st.hidden = []; save(); drawLayers(v); queue() }
+  $("#hideAll").onclick = () => { st.hidden = LAYER_CATS().map(c => c.id); save(); drawLayers(v); queue() }
+}
+$("#layers").onclick = () => { stack.length = 0; filter = null; drawChips(); push({ type: "layers", id: "all" }) }
+
 // drag the sheet down to close it
 {
   let y0 = null, dy = 0
@@ -525,7 +567,7 @@ function drawSettings() {
     <p class="foot">Progress stays on this device. Nothing is sent anywhere.</p>
     <p class="sec">About</p>
     <div class="group">
-      <div class="row"><span class="t"><b>Version</b></span><span class="val">1.0.0</span></div>
+      <div class="row"><span class="t"><b>Version</b></span><span class="val">${VERSION}</span></div>
       <div class="row"><span class="t"><b>Map data</b></span><span class="val">${new Date(data.updated + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></div>
       <a class="row link" href="https://github.com/nulljosh/flamingo"><span class="t"><b>Source code</b></span></a>
       <a class="row link" href="/brand/"><span class="t"><b>Brand kit</b></span></a>
@@ -610,6 +652,7 @@ function route() {
   else if (kind === "collectible" && coll[id]) { stack.length = 0; push({ type: "collectible", id }) }
   else if (kind === "list" && cat[id]) { stack.length = 0; openList(id) }
   else if (kind === "search") { stack.length = 0; push({ type: "search", q: id }) }
+  else if (kind === "layers") { stack.length = 0; push({ type: "layers", id: "all" }) }
 }
 route(); addEventListener("hashchange", route)
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("/sw.js").catch(() => {})
