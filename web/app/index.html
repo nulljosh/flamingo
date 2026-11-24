@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>try{const s=JSON.parse(localStorage.getItem("flamingo.v1")||"{}"),t=s.theme==="light"||s.theme==="dark"?s.theme:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Flamingo: map of Leonida</title>
+<meta name="description" content="Every place, mission and collectible in GTA VI's Leonida on one searchable map. Unofficial.">
+<meta name="theme-color" content="#cfe2f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1722" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flamingo">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="app.css?v=1">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-district" viewBox="0 0 24 24"><path d="M4 20V9l6-4v15M10 20h10v-9h-10M13.5 14h3M13.5 17h3M2.5 20h19"/></symbol>
+    <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></symbol>
+    <symbol id="i-safehouse" viewBox="0 0 24 24"><path d="M3.5 11.5L12 4l8.5 7.5M6 9.6V20h12V9.6M10 20v-5h4v5"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M5 8h14l-1.2 12H6.2zM9 8V7a3 3 0 016 0v1"/></symbol>
+    <symbol id="i-business" viewBox="0 0 24 24"><path d="M9 18V5.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></symbol>
+    <symbol id="i-race" viewBox="0 0 24 24"><path d="M6 21V4h12l-2.5 4 2.5 4H6"/></symbol>
+    <symbol id="i-weapons" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/></symbol>
+    <symbol id="i-nature" viewBox="0 0 24 24"><path d="M5 19C5 10 10.5 5 20 5c0 9.5-5 14.5-14 14.5M5.5 19l7.5-7.5"/></symbol>
+    <symbol id="i-transport" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v14M8 10.5h8M4.5 13a7.5 7.5 0 0015 0"/></symbol>
+    <symbol id="i-vehicle" viewBox="0 0 24 24"><path d="M4 16v-4l2.2-5h11.6l2.2 5v4zM4 16v2.5M20 16v2.5M4 12h16"/><circle cx="8" cy="14" r=".6"/><circle cx="16" cy="14" r=".6"/></symbol>
+    <symbol id="i-waink" viewBox="0 0 24 24"><path d="M4 8.5V5h3.5M16.5 5H20v3.5M20 15.5V19h-3.5M7.5 19H4v-3.5"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-meditation" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2"/><path d="M4.5 19.5c2.2-1.2 4.6-1.7 7.5-1.7s5.3.5 7.5 1.7M7 15.5c1.5-3 3-4.5 5-4.5s3.5 1.5 5 4.5"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1-4 3.8-6 7.5-6s6.5 2 7.5 6"/></symbol>
+    <symbol id="i-mission" viewBox="0 0 24 24"><path d="M6 21V4M6 4.5h12l-2 3.5 2 3.5H6"/></symbol>
+    <symbol id="i-collectible" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
+    <symbol id="i-region" viewBox="0 0 24 24"><path d="M9 4L3 6.5v14L9 18l6 2.5 6-2.5V4l-6 2.5zM9 4v14M15 6.5v14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20.5 20.5"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6.5v14L9 18l6 2.5 6-2.5V4l-6 2.5zM9 4v14M15 6.5v14"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v8h14v-8"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  </defs>
+</svg>
+
+<div id="map" aria-label="Map of Leonida" role="application">
+  <svg id="svg" aria-hidden="true"><g id="world"></g></svg>
+  <div class="layer" id="rlabels"></div>
+  <div class="layer" id="plabels"></div>
+  <div class="layer" id="pins"></div>
+</div>
+
+<div class="chips" id="chips" role="toolbar" aria-label="Filter the map"></div>
+<div class="ctrls glass" id="ctrls">
+  <button id="zin" aria-label="Zoom in"><svg class="i"><use href="#i-plus"/></svg></button>
+  <button id="zout" aria-label="Zoom out"><svg class="i"><use href="#i-minus"/></svg></button>
+  <button id="fit" aria-label="Show all of Leonida"><svg class="i"><use href="#i-fit"/></svg></button>
+</div>
+
+<section id="settings" aria-label="Settings"><div class="wrap" id="settingsBody"></div></section>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="false" aria-label="Details">
+  <div class="grab" id="grab"></div>
+  <div class="sheet-head" id="sheetHead"></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div class="dock">
+  <nav class="tabbar glass" role="tablist" aria-label="Sections">
+    <span class="tab-pill" id="tabPill" aria-hidden="true"></span>
+    <button class="tab" role="tab" id="tabMap" aria-selected="true"><svg class="i"><use href="#i-map"/></svg>Map</button>
+    <button class="tab" role="tab" id="tabSettings" aria-selected="false"><svg class="i"><use href="#i-settings"/></svg>Settings</button>
+  </nav>
+  <button class="search-btn glass" id="searchBtn" aria-label="Search"><svg class="i"><use href="#i-search"/></svg></button>
+</div>
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>

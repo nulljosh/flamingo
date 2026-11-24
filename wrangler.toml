@@ -1,0 +1,10 @@
+name = "flamingo"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./web"
+not_found_handling = "404-page"
+
+[[routes]]
+pattern = "flamingo.jaybulb.com"
+custom_domain = true

@@ -1,0 +1,3 @@
+{ "name": "Flamingo: map of Leonida", "short_name": "Flamingo", "start_url": "/app/", "scope": "/", "display": "standalone",
+  "background_color": "#cfe2f0", "theme_color": "#ff2d55",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }, { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }, { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }] }

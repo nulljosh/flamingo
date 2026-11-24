@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flamingo: every pin in Leonida</title>
+<meta name="description" content="The unofficial map for GTA VI. Every named place, story mission and collectible in Leonida, searchable, on the web, iPhone, iPad and Mac.">
+<meta property="og:title" content="Flamingo: every pin in Leonida">
+<meta property="og:description" content="The unofficial map for GTA VI. Places, missions and collectibles, searchable.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://flamingo.jaybulb.com/">
+<meta property="og:site_name" content="Flamingo">
+<meta property="og:image" content="https://flamingo.jaybulb.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Flamingo: the map of Leonida with its pins, and a place card for Ocean Beach.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://flamingo.jaybulb.com/">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon.svg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Flamingo","url":"https://flamingo.jaybulb.com/","description":"An unofficial, searchable map of Leonida for GTA VI: places, story missions and collectibles.","applicationCategory":"ReferenceApplication","operatingSystem":"Web, iOS, iPadOS, macOS","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Joshua Trommel"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="https://jaybulb.com/tokens.css">
+<link rel="stylesheet" href="palette.css?v=1">
+<link rel="stylesheet" href="https://jaybulb.com/landing.css">
+<script defer src="https://jaybulb.com/landing.js" data-shape="bars"></script>
+<link rel="stylesheet" href="hero.css?v=1">
+<script type="module" src="hero.js?v=1"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  section { padding: 2rem 1.5rem 7rem; }
+
+  /* the app, shown rather than described: real QA screenshots in phone frames */
+  .phones { display: flex; justify-content: center; align-items: flex-end; gap: clamp(12px, 3vw, 36px); max-width: 1040px; margin: 0 auto; }
+  .phone { flex: 0 1 300px; border-radius: 46px; padding: 9px; background: #1d1d1f; box-shadow: 0 30px 70px rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .06); }
+  .phone img { display: block; width: 100%; height: auto; border-radius: 37px; aspect-ratio: 390 / 844; object-fit: cover; background: var(--bg2); }
+  .phone:nth-child(2) { flex-basis: 330px; transform: translateY(-28px); }
+  @media (prefers-color-scheme: dark) { .phone { background: #2c2c2e; box-shadow: 0 30px 70px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08); } }
+  .cap { text-align: center; margin-top: 1.5rem; font-size: .875rem; color: var(--text2); }
+  .says { list-style: none; max-width: 880px; margin: 4rem auto 0; line-height: 1.5; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; color: var(--text2); font-size: .975rem; }
+  .says b { display: block; color: var(--text); font-weight: 650; margin-bottom: .2rem; }
+  .wide { max-width: 1040px; margin: 0 auto; }
+  .wide .lp-win img { display: block; width: 100%; height: auto; }
+  .h2 { text-align: center; font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.1; letter-spacing: -.025em; font-weight: 700; margin-bottom: .75rem; }
+  .sub { text-align: center; color: var(--text2); max-width: 40ch; margin: 0 auto 2.5rem; font-size: 1.0625rem; }
+  .count { display: flex; justify-content: center; gap: clamp(1.5rem, 6vw, 4.5rem); margin: 0 auto 4rem; flex-wrap: wrap; }
+  .count div { text-align: center; }
+  .count b { display: block; font-size: clamp(2.5rem, 6vw, 3.75rem); font-weight: 700; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .count span { color: var(--text2); font-size: .9375rem; }
+  .where { text-align: center; margin-top: 4rem; color: var(--text2); }
+  .where a { color: var(--text); font-weight: 600; margin-left: .4rem; }
+  .where a:hover { text-decoration: underline; }
+  .note { max-width: 640px; margin: 3rem auto 0; text-align: center; font-size: .8125rem; color: var(--text2); }
+  @media (max-width: 700px) {
+    .says { grid-template-columns: 1fr; gap: 1.25rem; text-align: center; }
+    .phones { gap: 10px; } .phone { border-radius: 26px; padding: 5px; } .phone img { border-radius: 21px; } .phone:nth-child(2) { transform: translateY(-14px); }
+  }
+
+  /* footer, as on the other Jaybulb landings */
+  .foot { padding: 4rem 1.5rem 1.5rem; border-top: 1px solid var(--border); overflow: hidden; }
+  .foot-top { max-width: 960px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2.5rem; }
+  .foot-brand { display: grid; gap: .5rem; align-content: start; }
+  .foot-brand img { border-radius: 10px; }
+  .foot-brand b { font-size: 2.5rem; line-height: 1; letter-spacing: -.02em; }
+  .foot-brand p, .foot .label { color: var(--text2); font-size: .9375rem; }
+  .foot-cols { display: flex; flex-wrap: wrap; gap: 3rem; }
+  .foot-cols div { display: grid; gap: .5rem; align-content: start; }
+  .foot .label { font-weight: 700; font-size: .875rem; margin-bottom: .25rem; }
+  .foot-cols a { font-size: .9375rem; }
+  .foot-cols a:hover { color: var(--pink-ink); }
+  .legal { margin-top: 1.5rem; font-size: .8125rem; color: var(--text2); text-align: center; }
+  .legal a:hover { text-decoration: underline; }
+  @media (max-width: 560px) { .foot-cols { gap: 2rem; } }
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+</style>
+<style>/* footer glyph band (footer-band.js) */ .word-band{color:var(--text);position:relative;width:100vw;margin:40px 0 0 calc(50% - 50vw);height:clamp(120px,16vw,220px)} .word-canvas{position:absolute;inset:0;width:100%;height:100%;display:none} .word-band.live .word-canvas{display:block}</style>
+<link rel="stylesheet" href="/fonts/fonts.css">
+</head>
+<body id="top">
+<nav class="topbar" aria-label="Site">
+  <a href="/" class="tb-brand" aria-label="Flamingo home"><img src="icon.svg" alt="" width="30" height="30"><span>Flamingo</span></a>
+  <div class="tb-acct"><a href="https://github.com/nulljosh/flamingo" class="tb-link">Source</a><a href="/app/" class="tb-btn">Open the map</a></div>
+</nav>
+<main>
+<header class="lp-hero">
+  <div class="backdrop" aria-hidden="true" inert><div class="ground" id="mapboard"></div></div>
+  <div class="hero-copy">
+    <h1>Every pin in Leonida.</h1>
+    <p class="lp-lede">The unofficial map for GTA VI. Places, missions and collectibles, all searchable.</p>
+    <div class="lp-cta">
+      <a href="/app/" class="lp-btn lp-solid">Open the map</a>
+      <a href="https://github.com/nulljosh/flamingo" class="lp-btn">Source</a>
+    </div>
+    <p class="demo" id="dPlace" aria-hidden="true"><span class="demo-dot"></span><span><b>Ocean Beach</b><small>Neighbourhood · Vice City</small></span></p>
+  </div>
+</header>
+
+<section id="app" class="lp-reveal">
+  <div class="phones">
+    <div class="phone"><picture><source srcset="img/phone-search-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-search-light.png" alt="Search for garage: Shore Court Garage and Paradise Garage, each with its region" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-vicecity-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-vicecity-light.png" alt="The map zoomed into Vice City, pins and names for Ocean Beach, Little Cuba and downtown" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-place-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-place-light.png" alt="A place card for Shore Court Garage, marked visited" loading="lazy"></picture></div>
+  </div>
+  <p class="cap">Screenshots from the QA run, not mock-ups.</p>
+  <ul class="says">
+    <li><b>One map, six regions.</b> From the Keys up to Mount Kalaga, every named place has a pin.</li>
+    <li><b>Search finds anything.</b> Places, regions, missions and collectibles in one field.</li>
+    <li><b>No spoilers until you want them.</b> Mission names stay hidden until you turn them on.</li>
+  </ul>
+</section>
+
+<section id="numbers" class="lp-reveal">
+  <h2 class="h2">The whole state, indexed.</h2>
+  <p class="sub">Pulled from Rockstar's trailers and site, then checked against the community maps.</p>
+  <div class="count">
+    <div><b id="nPlaces">87</b><span>places on the map</span></div>
+    <div><b id="nMissions">91</b><span>story missions</span></div>
+    <div><b id="nColl">714</b><span>collectibles to count</span></div>
+  </div>
+  <div class="wide"><div class="lp-win">
+    <div class="lp-bar"><i></i><i></i><i></i><b>flamingo.jaybulb.com</b></div>
+    <picture><source srcset="img/desktop-region-dark.png" media="(prefers-color-scheme: dark)"><img src="img/desktop-region-light.png" alt="On a Mac: Vice City's places in a side panel next to the map" loading="lazy"></picture>
+  </div></div>
+</section>
+
+<section id="settings" class="lp-reveal">
+  <div class="phones">
+    <div class="phone"><picture><source srcset="img/phone-browse-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-browse-light.png" alt="Browse: categories as round icons, then the six regions" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-settings-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-settings-light.png" alt="Settings: progress, appearance and map options" loading="lazy"></picture></div>
+  </div>
+  <ul class="says">
+    <li><b>Track your run.</b> Mark places visited and missions done, and count collectibles as you go.</li>
+    <li><b>Your map, your way.</b> Hide categories, group pins, and choose light or dark.</li>
+    <li><b>Stays on your device.</b> No account, nothing sent anywhere. Works offline.</li>
+  </ul>
+  <p class="where">Free on the web. iPhone, iPad and Mac next. <a href="/app/">Open the map &rarr;</a></p>
+  <p class="note">Unofficial fan project. Not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of Take-Two Interactive. Pins are approximate.</p>
+</section>
+</main>
+<footer class="foot">
+  <div class="foot-top">
+    <div class="foot-brand"><img src="icon.svg" alt="" width="40" height="40"><b>Flamingo</b><p>Every pin in Leonida.</p></div>
+    <nav class="foot-cols" aria-label="Footer">
+      <div><p class="label">Flamingo</p><a href="/app/">Open the map</a><a href="/app/#search">Search</a><a href="/app/#settings">Settings</a></div>
+      <div><p class="label">Source</p><a href="https://github.com/nulljosh/flamingo">GitHub</a><a href="https://github.com/nulljosh/flamingo/blob/main/scripts/build-data.mjs">Where the data comes from</a></div>
+      <div><p class="label">More</p><a href="mailto:info@jaybulb.com?subject=Flamingo">Report a wrong pin</a><a href="https://jaybulb.com">More apps</a><a href="#top">Back to top</a></div>
+    </nav>
+  </div>
+  <div class="word-band" aria-hidden="true"><canvas class="word-canvas"></canvas></div>
+  <p class="legal">&copy; 2026 Joshua Trommel &middot; Apache 2.0 &middot; <a href="privacy.html">Privacy</a></p>
+</footer>
+<script src="footer-band.js?v=1" defer></script>
+</body>
+</html>
