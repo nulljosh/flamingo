@@ -19,10 +19,10 @@ Compared against App Store screens of MapGenie (Crimson Desert, Elden Ring), Int
 |---|-----|------------|------|---------|--------|
 | G1 | Layers panel on the map: every category with its count, a found bar, Show all / Hide all | MapGenie, GTA 5 map | M | 1.2.0 | done |
 | G2 | Search results on the map: matches stay as lettered pins, "Show on map" folds the sheet down | GTA 5 map, Apple Maps, Google Maps | M | 1.3.0 | done |
-| G3 | My pins: long-press to drop your own pin with a note; star places as favourites | MapGenie notes, Mapstr, GTA 5 map favourites | M | 1.4.0 | todo |
-| G4 | Recents: last searches and places you opened, on the empty search | Apple Maps, Google Maps | S | 1.5.0 | todo |
-| G5 | Progress per category in the Story tab, beside missions and collectibles | Elden Ring map tracker, GTA 5 map | S | 1.6.0 | todo |
-| G6 | First-run hints: tap a region, long-press to pin, where Story lives | Mapstr, Apple Maps | S | 1.7.0 | todo |
+| G3 | My pins: long-press to drop your own pin with a note; star places as favourites | MapGenie notes, Mapstr, GTA 5 map favourites | M | 1.4.0 | done |
+| G4 | Recents: last searches and places you opened, on the empty search | Apple Maps, Google Maps | S | 1.5.0 | done |
+| G5 | Progress per category in the Story tab, beside missions and collectibles | Elden Ring map tracker, GTA 5 map | S | 1.6.0 | done |
+| G6 | First-run hints: tap a region, long-press to pin, where Story lives | Mapstr, Apple Maps | S | 1.7.0 | done |
 
 Skipped on purpose: photos and quest walkthroughs (no rights to the art, no verified step data), satellite tiles (Rockstar's imagery), accounts, social and paywalls.
 
@@ -33,3 +33,11 @@ Also fixed in 1.3.0: hidden pins were still drawn on the web, because `.pin { di
 - GTA VI colours: Vice pink `#ff3d8b`, sunset `#ff8a3d → #ff3d8b`, sea teal `#14b8c4`, and teal-tinted water. No violet.
 - New icon: a white pin over a striped sunset and teal water.
 - Next: accounts in the iOS app (same table, URLSession), then G3 to G6.
+
+## 1.5.0 and 1.6.0 (2026-11-24)
+- iOS accounts: the same email sign-in and `flamingo_progress` sync as the web, with the session in the Keychain. Checked against a local API: the phone's visits reached the account row.
+- G4: recents, the last 6 searches and places, on the empty search.
+- G5: progress for each category in the Story tab.
+- G6: a first-run card with three hints.
+- G3: long-press the map to drop your own pin (name and note), and save places with a star. Both sync (new `fav` and `pins` columns).
+- The iOS dock stays centred on every tab.

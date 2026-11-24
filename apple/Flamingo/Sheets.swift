@@ -15,6 +15,7 @@ struct SheetRoot: View {
         switch r {
         case .search: SearchScreen()
         case .layers: LayersScreen()
+        case .pin(let id): PinScreen(id: id)
         case .place(let id): PlaceScreen(place: D.places[id]!)
         case .region(let id): RegionScreen(region: D.regions[id]!)
         case .mission(let id): MissionScreen(mission: D.missions[id]!)
@@ -113,6 +114,39 @@ struct SearchScreen: View {
     var body: some View {
         List {
             if q.trimmingCharacters(in: .whitespaces).isEmpty {
+                let favs = (store.s.fav ?? [:]).keys.sorted().compactMap { D.places[$0] }, mine = store.s.pins ?? []
+                if !favs.isEmpty || !mine.isEmpty {
+                    Section("Saved") {
+                        ForEach(favs) { PlaceRow(p: $0) }
+                        ForEach(mine) { p in
+                            NavigationLink(value: Route.pin(p.id)) {
+                                HStack(spacing: 12) {
+                                    Badge(symbol: "mappin", color: .pink)
+                                    VStack(alignment: .leading, spacing: 1) { Text(p.name).lineLimit(1); Text(p.note.isEmpty ? "Your pin" : p.note).font(.subheadline).foregroundStyle(.secondary).lineLimit(1) }
+                                }
+                            }
+                        }
+                    }
+                }
+                let rq = store.s.recentQ ?? [], rp = (store.s.recentP ?? []).compactMap { D.places[$0] }
+                if !rq.isEmpty || !rp.isEmpty {
+                    Section {
+                        if !rq.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(rq, id: \.self) { x in
+                                        Button { q = x } label: { Label(x, systemImage: "magnifyingglass").font(.subheadline.weight(.medium)).padding(.horizontal, 12).frame(height: 34).background(Color(uiColor: .tertiarySystemFill), in: Capsule()) }
+                                            .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        }
+                        ForEach(rp) { PlaceRow(p: $0) }
+                    } header: {
+                        HStack { Text("Recents"); Spacer(); Button("Clear") { store.s.recentQ = []; store.s.recentP = [] }.font(.footnote.weight(.semibold)).textCase(nil) }
+                    }
+                }
                 Section("Browse") {
                     LazyVGrid(columns: cols, spacing: 12) {
                         ForEach(D.data.categories) { c in
@@ -175,6 +209,8 @@ struct SearchScreen: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { if ProcessInfo.processInfo.environment["QA_QUERY"].map({ q = $0 }) == nil { focused = true }; updateHits() }
         .onChange(of: q) { _ in updateHits(); model.peek = false }
+        .onSubmit { store.remember(query: q) }
+        .onDisappear { if !store.isQA { store.remember(query: q) } }
         .onChange(of: focused) { if $0 { model.peek = false } }
     }
 }
@@ -231,8 +267,13 @@ struct PlaceScreen: View {
                             Label(v ? "Visited" : "Mark visited", systemImage: "checkmark").frame(maxWidth: .infinity).frame(height: 50)
                                 .foregroundStyle(v ? .white : .pink).background(v ? Color.pink : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
+                        let f = store.s.fav?[place.id] != nil
+                        Button { store.toggleFav(place.id) } label: {
+                            Label(f ? "Saved" : "Save", systemImage: f ? "star.fill" : "star").frame(maxWidth: .infinity).frame(height: 50)
+                                .foregroundStyle(f ? .white : .pink).background(f ? Color.pink : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
                         ShareLink(item: URL(string: "https://flamingo.jaybulb.com/app/#place/\(place.id)")!) {
-                            Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity).frame(height: 50)
+                            Label("Share", systemImage: "square.and.arrow.up").labelStyle(.iconOnly).frame(maxWidth: .infinity).frame(height: 50)
                                 .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                     }
@@ -250,7 +291,7 @@ struct PlaceScreen: View {
         .listStyle(.insetGrouped).scrollContentBackground(.hidden)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { CloseButton() } }
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { model.selected = place.id; model.focus(place) }
+        .onAppear { model.selected = place.id; model.focus(place); if !store.isQA { store.remember(place: place.id) } }
     }
 }
 
@@ -422,5 +463,33 @@ struct LayersScreen: View {
     func wide(_ t: String, _ f: @escaping () -> Void) -> some View {
         Button(action: f) { Text(t).font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 44).foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }
             .buttonStyle(.plain)
+    }
+}
+
+// your own pin: name, note, delete
+struct PinScreen: View {
+    let id: String
+    @EnvironmentObject var store: Store
+    @EnvironmentObject var model: MapModel
+    var index: Int? { store.s.pins?.firstIndex { $0.id == id } }
+    var body: some View {
+        if let i = index, let pins = store.s.pins {
+            List {
+                Section {
+                    Header(symbol: "mappin", color: .pink, title: pins[i].name, sub: "Your pin")
+                        .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+                }
+                Section {
+                    TextField("Name", text: Binding(get: { store.s.pins?[i].name ?? "" }, set: { store.s.pins?[i].name = $0.isEmpty ? "My pin" : $0 }))
+                    TextField("A note: what's here, what to come back for", text: Binding(get: { store.s.pins?[i].note ?? "" }, set: { store.s.pins?[i].note = $0 }), axis: .vertical).lineLimit(3...6)
+                } footer: { Text("Only you see your pins. Sign in to keep them on every device.") }
+                Section {
+                    Button("Delete pin", role: .destructive) { store.s.pins?.remove(at: i); model.route = nil; model.selected = nil }
+                }
+            }
+            .listStyle(.insetGrouped).scrollContentBackground(.hidden)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { CloseButton() } }
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }

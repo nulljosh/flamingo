@@ -20,10 +20,10 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
-const VERSION = "1.4.0"
+const VERSION = "1.6.0"
 let hits = null   // place ids matching the search, shown as lettered pins while the search is open
 const KEY = "flamingo.v1"
-const DEF = { savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
+const DEF = { fav: {}, pins: [], recentQ: [], recentP: [], hinted: false, savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
 const st = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") } } catch { return { ...DEF } } })()
 const save = (progress = true) => { if (progress && acct.user) { st.dirty = true; schedulePush() } try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
 
@@ -36,7 +36,7 @@ let pushTimer = 0
 function schedulePush() { clearTimeout(pushTimer); pushTimer = setTimeout(pushProgress, 1500) }
 async function pushProgress() {
   if (!acct.user) return
-  const { error } = await sb.from("flamingo_progress").upsert(toRow(acct.user.id, { visited: st.visited, done: st.done, found: st.found, savePct: st.savePct }), { onConflict: "id" })
+  const { error } = await sb.from("flamingo_progress").upsert(toRow(acct.user.id, { visited: st.visited, done: st.done, found: st.found, savePct: st.savePct, fav: st.fav, pins: st.pins }), { onConflict: "id" })
   if (!error) { st.dirty = false; st.linked = true; acct.syncedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} ; refreshAcct() }
 }
 async function pullProgress() {
@@ -44,7 +44,7 @@ async function pullProgress() {
   const { data, error } = await sb.from("flamingo_progress").select("*")
   if (error) return
   const r = reconcile(st, data?.[0] || null)
-  Object.assign(st, { visited: r.progress.visited, done: r.progress.done, found: r.progress.found, savePct: r.progress.savePct })
+  Object.assign(st, { visited: r.progress.visited, done: r.progress.done, found: r.progress.found, savePct: r.progress.savePct, fav: r.progress.fav, pins: r.progress.pins })
   if (r.push) { st.dirty = true; await pushProgress() } else { st.linked = true; acct.syncedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
   queue(); refreshAcct()
   if (document.body.classList.contains("on-story")) drawStory()
@@ -230,7 +230,20 @@ mapEl.addEventListener("pointerdown", e => {
   mapEl.setPointerCapture(e.pointerId)
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY })
   moved = false; startGesture()
+  clearTimeout(pressTimer)
+  if (ptrs.size === 1) pressTimer = setTimeout(() => { if (!moved && ptrs.size === 1) { pressed = true; dropPin(e.clientX, e.clientY) } }, 550)
 })
+let pressTimer = 0, pressed = false
+mapEl.addEventListener("contextmenu", e => { e.preventDefault(); dropPin(e.clientX, e.clientY) })
+// your own pin, where you pressed: kept in st.pins (and synced with an account)
+function dropPin(cx, cy) {
+  const x = Math.round((cx - view.x) / view.s), y = Math.round((cy - view.y) / view.s)
+  const pin = { id: `u${Date.now().toString(36)}`, name: "My pin", note: "", x, y, at: Date.now() }
+  st.pins = [...(st.pins || []), pin]; save(); queue()
+  navigator.vibrate?.(10)
+  stack.length = 0; push({ type: "pin", id: pin.id, fresh: true })
+  focus(x, y, view.s)   // keep the new pin above its sheet
+}
 function startGesture() {
   const p = [...ptrs.values()]
   if (p.length === 1) gesture = { kind: "pan", x0: p[0].x, y0: p[0].y, vx: view.x, vy: view.y }
@@ -246,6 +259,7 @@ mapEl.addEventListener("pointermove", e => {
   const p = [...ptrs.values()]
   if (gesture?.kind === "pan" && p.length === 1) {
     const dx = p[0].x - gesture.x0, dy = p[0].y - gesture.y0
+    if (Math.hypot(dx, dy) > 6) clearTimeout(pressTimer)
     if (Math.hypot(dx, dy) > 4) { moved = true; mapEl.classList.add("drag") }
     const now = performance.now(), dt = Math.max(1, now - vel.t)
     vel = { x: (e.clientX - prev.x) / dt, y: (e.clientY - prev.y) / dt, t: now }
@@ -260,6 +274,8 @@ mapEl.addEventListener("pointermove", e => {
 let fling = 0, lastTap = 0
 const end = e => {
   if (!ptrs.has(e.pointerId)) return
+  clearTimeout(pressTimer)
+  if (pressed) { pressed = false; ptrs.delete(e.pointerId); gesture = null; return }
   ptrs.delete(e.pointerId); mapEl.classList.remove("drag")
   if (ptrs.size) { startGesture(); return }
   if (gesture?.kind === "pan" && moved && performance.now() - vel.t < 60) {
@@ -295,6 +311,9 @@ $("#zout").onclick = () => { const { w, h } = size(); zoomAt(1 / 1.8, w / 2, h /
 $("#fit").onclick = () => animateTo(fitView())
 
 // ---------- pins, clusters and labels ----------
+const MYPIN = { id: "mypin", name: "My pins", one: "My pin", color: "#ff3d8b", symbol: "mappin" }
+cat.mypin = MYPIN
+const myPins = () => (st.pins || []).map(p => ({ ...p, cat: "mypin", region: null, tag: "mine", mine: true }))
 let filter = null // a category id from the chips, or null for everything
 let selected = null
 const pinEls = new Map(), labelEls = new Map(), clusterPool = []
@@ -308,7 +327,7 @@ const rlabels = data.regions.map(r => {
   return { r, d, c }
 })
 const OVERVIEW = 1.45
-const PRIORITY = ["district", "safehouse", "landmark", "race", "store", "business", "activity", "transport", "nature", "weapons", "waink", "meditation", "vehicle", "people"]
+const PRIORITY = ["mypin", "district", "safehouse", "landmark", "race", "store", "business", "activity", "transport", "nature", "weapons", "waink", "meditation", "vehicle", "people"]
 const prio = p => PRIORITY.indexOf(p.cat)
 function visible(p) {
   if (p.id === selected) return true
@@ -324,8 +343,9 @@ function pinEl(p) {
   let b = pinEls.get(p.id)
   if (!b) {
     b = document.createElement("button"); b.className = "pin drop"; b.style.setProperty("--c", cat[p.cat].color)
-    b.setAttribute("aria-label", `${p.name}, ${cat[p.cat].one}`); b.innerHTML = icon(p.cat)
-    b.onclick = e => { e.stopPropagation(); openPlace(p.id, { fromMap: true }) }
+    b.setAttribute("aria-label", `${p.name}, ${cat[p.cat].one}`); b.innerHTML = icon(p.mine ? "pin" : p.cat)
+    if (p.mine) b.classList.add("mine")
+    b.onclick = e => { e.stopPropagation(); p.mine ? (stack.length = 0, push({ type: "pin", id: p.id })) : openPlace(p.id, { fromMap: true }) }
     $("#pins").appendChild(b); pinEls.set(p.id, b)
   }
   return b
@@ -346,7 +366,7 @@ function render() {
     d.style.transform = t; c.style.transform = t
     d.classList.toggle("hide", overview || z > 3.4); c.classList.toggle("hide", !overview)
   }
-  const list = overview ? [] : pinned.filter(visible).sort((a, b) => prio(a) - prio(b))
+  const list = overview ? [] : [...pinned.filter(visible), ...myPins().filter(p => p.id === selected || (filter ? filter === "mypin" : !hits && !st.hidden.includes("mypin")))].sort((a, b) => prio(a) - prio(b))
   const pos = p => [view.x + p.x * view.s, view.y + p.y * view.s]
   // group pins that would overlap; the selected pin always stands alone
   const groups = []
@@ -438,12 +458,12 @@ function showSheet() {
   if (v.type !== "search") { hits = null; sheet.classList.remove("peek") }
   const backBtn = stack.length > 1 ? `<button class="round" id="sBack" aria-label="Back">${icon("back")}</button>` : ""
   const close = `<button class="round" id="sClose" aria-label="Close">${icon("close")}</button>`
-  selected = v.type === "place" ? v.id : null
+  selected = v.type === "place" || v.type === "pin" ? v.id : null
   if (v.type === "search") {
     head.innerHTML = `${backBtn}<label class="field">${icon("search")}<input id="q" type="search" placeholder="Search Leonida" autocomplete="off" spellcheck="false" enterkeyhint="search" value="${esc(v.q || "")}"></label>${close}`
     const q = $("#q"); q.oninput = () => { v.q = q.value; drawSearch(v) }
     q.onfocus = () => sheet.classList.remove("peek")
-    q.onkeydown = e => { if (e.key === "Enter" && hits?.length) { q.blur(); showHits() } }
+    q.onkeydown = e => { if (e.key === "Enter" && q.value.trim()) remember("recentQ", q.value.trim(), 6); if (e.key === "Enter" && hits?.length) { q.blur(); showHits() } }
     if (v.focus) { v.focus = false; setTimeout(() => q.focus({ preventScroll: true }), 60) }
     drawSearch(v)
   } else {
@@ -455,6 +475,7 @@ function showSheet() {
     else if (v.type === "collectible") drawCollectible(v)
     else if (v.type === "list") drawList(v)
     else if (v.type === "layers") drawLayers(v)
+    else if (v.type === "pin") drawPin(v)
   }
   $("#sBack") && ($("#sBack").onclick = back)
   $("#sClose").onclick = closeSheet
@@ -463,8 +484,12 @@ function showSheet() {
   queue()
 }
 function openSearch() { if (top()?.type === "search") { $("#q")?.focus(); return } stack.length = 0; push({ type: "search", q: "", focus: true }) }
+function remember(list, v, n) { st[list] = [v, ...(st[list] || []).filter(x => x !== v)].slice(0, n); save(false) }
 function openPlace(id, { fromMap = false } = {}) {
   const p = place[id]; if (!p) return
+  const q = top()?.type === "search" && top().q?.trim()
+  if (q) remember("recentQ", q, 6)
+  remember("recentP", id, 6)
   if (fromMap || top()?.type === "place") stack.length = 0
   push({ type: "place", id })
   if (p.x != null) focus(p.x, p.y)
@@ -476,6 +501,7 @@ const where = p => [cat[p.cat].one, p.region ? region[p.region].name : "Location
 const row = (attrs, ic, color, title, sub, right = icon("chev").replace('class="i"', 'class="i chev"'), sq = false) =>
   `<button class="row" ${attrs}><span class="ic${sq ? " sq" : ""}" style="--c:${color}">${icon(ic)}</span><span class="t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span>${right}</button>`
 const placeRow = (p, letter = "") => row(`data-place="${p.id}"`, p.cat, cat[p.cat].color, (letter ? `<span class="letter">${letter}</span>` : "") + esc(p.name), esc(where(p)), st.visited[p.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
+const pinRow = p => row(`data-pin="${p.id}"`, "pin", "#ff3d8b", esc(p.name), esc(p.note || "Your pin"))
 // fold the search sheet down and fit the lettered pins in the map above it
 function showHits() {
   if (!hits) return
@@ -487,6 +513,7 @@ const missionRow = m => row(`data-mission="${m.id}"`, "mission", m.heist ? "#ff3
 const collRow = c => row(`data-coll="${c.id}"`, "collectible", "#ff9500", esc(c.name), `${st.found[c.id] || 0} of ${c.total} found`)
 function wire(root = body) {
   root.querySelectorAll("[data-place]").forEach(b => b.onclick = () => openPlace(b.dataset.place))
+  root.querySelectorAll("[data-pin]").forEach(b => b.onclick = () => { const p = myPins().find(x => x.id === b.dataset.pin); push({ type: "pin", id: b.dataset.pin }); if (p) focus(p.x, p.y) })
   root.querySelectorAll("[data-mission]").forEach(b => b.onclick = () => push({ type: "mission", id: b.dataset.mission }))
   root.querySelectorAll("[data-coll]").forEach(b => b.onclick = () => push({ type: "collectible", id: b.dataset.coll }))
   root.querySelectorAll("[data-region]").forEach(b => b.onclick = () => { push({ type: "region", id: b.dataset.region }); const r = region[b.dataset.region]; zoomToItems(pinned.filter(p => p.region === r.id)) })
@@ -500,19 +527,26 @@ function drawSearch(v) {
   const q = norm(v.q)
   if (!q) {
     const counts = id => id === "mission" ? data.missions.length : id === "collectible" ? data.collectibles.length : data.places.filter(p => p.cat === id).length
-    body.innerHTML = `<p class="sec">Browse</p><div class="grid">${data.categories.map(c => `<button class="tile" data-list="${c.id}"><span class="ic" style="--c:${c.color}">${icon(c.id)}</span>${esc(c.name.split(" &")[0].split(",")[0])}<small style="color:var(--text2)">${counts(c.id)}</small></button>`).join("")}</div>
+    const rp = (st.recentP || []).map(id => place[id]).filter(Boolean), rq = st.recentQ || []
+    const favs = Object.keys(st.fav || {}).map(id => place[id]).filter(Boolean), mine = myPins()
+    const saved = favs.length || mine.length ? `<p class="sec">Saved</p><div class="group">${favs.map(p => placeRow(p)).join("")}${mine.map(pinRow).join("")}</div>` : ""
+    body.innerHTML = saved + (rq.length || rp.length ? `<p class="sec chap">Recents<button class="acct-link" id="clearRecents">Clear</button></p>
+      ${rq.length ? `<div class="recent-q">${rq.map(x => `<button class="chip" data-q="${esc(x)}">${icon("search")}${esc(x)}</button>`).join("")}</div>` : ""}
+      ${rp.length ? `<div class="group">${rp.map(p => placeRow(p)).join("")}</div>` : ""}` : "") + `<p class="sec">Browse</p><div class="grid">${data.categories.map(c => `<button class="tile" data-list="${c.id}"><span class="ic" style="--c:${c.color}">${icon(c.id)}</span>${esc(c.name.split(" &")[0].split(",")[0])}<small style="color:var(--text2)">${counts(c.id)}</small></button>`).join("")}</div>
       <p class="sec">Regions</p><div class="group">${data.regions.map(r => row(`data-region="${r.id}"`, "region", r.color, esc(r.name), `${data.places.filter(p => p.region === r.id && p.cat !== "people").length} places · ${esc(r.inspiration)}`, undefined, true)).join("")}</div>
       <p class="fine">${esc(data.disclaimer)}</p>`
   } else {
     const res = search(data, v.q, { spoilers: st.spoilers })
+    const mineHit = myPins().filter(p => norm(p.name + " " + p.note).includes(norm(v.q)))
     hits = res.filter(r => r.kind === "place" && r.item.x != null).slice(0, 26).map(r => r.item.id)
     if (!hits.length) hits = null
     queue()
-    if (!res.length) body.innerHTML = `<div class="empty"><b>No results</b>Nothing in Leonida matches “${esc(v.q)}”.${st.spoilers ? "" : "<br>Mission names are hidden. Turn on spoilers in Settings to search them."}</div>`
+    if (!res.length && !mineHit.length) body.innerHTML = `<div class="empty"><b>No results</b>Nothing in Leonida matches “${esc(v.q)}”.${st.spoilers ? "" : "<br>Mission names are hidden. Turn on spoilers in Settings to search them."}</div>`
     else {
       const parts = { region: [], place: [], mission: [], collectible: [] }
       res.forEach(r => parts[r.kind].push(r.item))
       body.innerHTML = [
+        mineHit.length && `<p class="sec">Your pins</p><div class="group">${mineHit.map(pinRow).join("")}</div>`,
         hits && `<button class="act wide showmap" id="showHits">${icon("map")}Show ${hits.length} on the map</button>`,
         parts.place.length && `<p class="sec">Places</p><div class="group">${parts.place.map(p => placeRow(p, hits && hits.includes(p.id) ? String.fromCharCode(65 + hits.indexOf(p.id)) : "")).join("")}</div>`,
         parts.region.length && `<p class="sec">Regions</p><div class="group">${parts.region.map(r => row(`data-region="${r.id}"`, "region", r.color, esc(r.name), esc(r.inspiration), undefined, true)).join("")}</div>`,
@@ -522,7 +556,11 @@ function drawSearch(v) {
       $("#showHits") && ($("#showHits").onclick = showHits)
     }
   }
-  if (!q) { hits = null; queue() }
+  if (!q) {
+    hits = null; queue()
+    body.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { v.q = b.dataset.q; $("#q").value = v.q; drawSearch(v) })
+    $("#clearRecents") && ($("#clearRecents").onclick = () => { st.recentQ = []; st.recentP = []; save(false); drawSearch(v) })
+  }
   wire()
 }
 function drawPlace(v) {
@@ -535,6 +573,7 @@ function drawPlace(v) {
     <p class="note">${esc(p.note)}</p>
     <div class="actions">
       <button class="act${st.visited[p.id] ? " on" : ""}" id="visit">${icon("check")}${st.visited[p.id] ? "Visited" : "Mark visited"}</button>
+      <button class="act${st.fav?.[p.id] ? " on" : ""}" id="fav" aria-pressed="${!!st.fav?.[p.id]}">${icon("landmark")}${st.fav?.[p.id] ? "Saved" : "Save"}</button>
       <button class="act" id="share">${icon("share")}Share</button>
     </div>
     ${parent ? `<p class="sec">Found at</p><div class="group">${placeRow(parent)}</div>` : ""}
@@ -543,6 +582,7 @@ function drawPlace(v) {
     ${p.region ? `<p class="sec">Region</p><div class="group">${row(`data-region="${p.region}"`, "region", region[p.region].color, esc(region[p.region].name), esc(region[p.region].inspiration), undefined, true)}</div>` : ""}
     <p class="fine">${p.x != null ? "Pin positions are approximate." : "Named in the game, but where it sits isn't known yet."}</p>`
   $("#visit").onclick = () => { st.visited[p.id] ? delete st.visited[p.id] : st.visited[p.id] = Date.now(); save(); drawPlace(v); queue() }
+  $("#fav").onclick = () => { st.fav ||= {}; st.fav[p.id] ? delete st.fav[p.id] : st.fav[p.id] = Date.now(); save(); drawPlace(v) }
   $("#share").onclick = async () => {
     const url = `${location.origin}${location.pathname}#place/${p.id}`
     try { if (navigator.share) await navigator.share({ title: p.name, url }); else { await navigator.clipboard.writeText(url); $("#share").lastChild.textContent = "Link copied" } } catch {}
@@ -595,6 +635,22 @@ function drawList(v) {
   }
   body.innerHTML = `<div class="ph"><span class="ic" style="--c:${c.color}">${icon(c.id)}</span><div><h2>${esc(c.name)}</h2><p>${n} in Leonida</p></div></div>${rows}`
   wire()
+}
+
+// your own pin: name, note, delete
+function drawPin(v) {
+  const pin = (st.pins || []).find(p => p.id === v.id)
+  if (!pin) return closeSheet()
+  body.innerHTML = `<div class="ph"><span class="ic" style="--c:var(--pink)">${icon("pin")}</span><div><h2>${esc(pin.name)}</h2><p>Your pin · ${new Date(pin.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p></div></div>
+    <div class="pin-form"><input id="pinName" value="${esc(pin.name)}" maxlength="60" aria-label="Name" placeholder="Name"><textarea id="pinNote" rows="3" maxlength="500" aria-label="Note" placeholder="A note: what's here, what to come back for">${esc(pin.note)}</textarea></div>
+    <div class="actions"><button class="act" id="pinShare">${icon("share")}Share</button><button class="act danger" id="pinDel">${icon("close")}Delete</button></div>
+    <p class="fine">Only you see your pins.${acct.user ? " They sync with your account." : " Sign in to keep them on every device."}</p>`
+  const name = $("#pinName"), note = $("#pinNote")
+  if (v.fresh) { v.fresh = false; setTimeout(() => { name.focus(); name.select() }, 350) }
+  const upd = () => { pin.name = name.value.trim() || "My pin"; pin.note = note.value; save(); body.querySelector("h2").textContent = pin.name; const b = pinEls.get(pin.id); if (b) b.setAttribute("aria-label", pin.name); labelEls.get(pin.id)?.remove(); labelEls.delete(pin.id); queue() }
+  name.oninput = upd; note.oninput = upd
+  $("#pinDel").onclick = () => { st.pins = st.pins.filter(p => p.id !== pin.id); save(); pinEls.get(pin.id)?.remove(); pinEls.delete(pin.id); labelEls.get(pin.id)?.remove(); labelEls.delete(pin.id); closeSheet() }
+  $("#pinShare").onclick = async () => { const t = `${pin.name}${pin.note ? ": " + pin.note : ""}`; try { navigator.share ? await navigator.share({ title: pin.name, text: t }) : (await navigator.clipboard.writeText(t), $("#pinShare").lastChild.textContent = "Copied") } catch {} }
 }
 
 // the layers panel: every category on the map, its count and how many you've visited, one switch each
@@ -692,6 +748,9 @@ function drawStory() {
     <p class="foot">A guess. It assumes the story is about ${STORY_SHARE}% of a 100% save, as in GTA V. Rockstar hasn't published the real weights.</p>
     ${[1, 2, 3, 4, 5].map(ch => { const cm = ms.filter(m => m.chapter === ch), d = cm.filter(m => st.done[m.id]).length
       return `<p class="sec chap">${esc(chapterName(cm[0]))}<span>${d} / ${cm.length}</span></p><div class="group">${cm.map(m => `<button class="row${st.done[m.id] ? " on" : ""}${next && m.id === next.id ? " nextup" : ""}" data-done="${m.id}" aria-pressed="${!!st.done[m.id]}"><span class="chk">${icon("check")}</span><span class="t"><b>${esc(missionName(m))}</b><small>${esc(who(m))}</small></span>${m.heist ? '<span class="heist">Heist</span>' : ""}</button>`).join("")}</div>` }).join("")}
+    <p class="sec">Places</p>
+    <div class="group">${LAYER_CATS().map(c => { const items = pinned.filter(p => p.cat === c.id), seen = items.filter(p => st.visited[p.id]).length
+      return `<button class="row layer-row" data-list="${c.id}" style="--c:${c.color}"><span class="ic">${icon(c.id)}</span><span class="t"><b>${esc(c.name)}</b><small><span class="lbar"><i style="width:${items.length ? seen / items.length * 100 : 0}%"></i></span>${seen} / ${items.length} visited</small></span>${icon("chev").replace('class="i"', 'class="i chev"')}</button>` }).join("")}</div>
     <p class="sec">Collectibles</p>
     <div class="group">${data.collectibles.map(c => `<div class="row"><span class="ic" style="--c:#ff9500">${icon("collectible")}</span><span class="t"><b>${esc(c.name)}</b><small>${c.total} in Leonida</small></span><span class="mini"><button data-step="${c.id}" data-k="-1" aria-label="One fewer ${esc(c.name)}">${icon("minus")}</button><output>${st.found[c.id] || 0}/${c.total}</output><button data-step="${c.id}" data-k="1" aria-label="One more ${esc(c.name)}">${icon("plus")}</button></span></div>`).join("")}</div>
     <p class="foot">Mission names follow the spoiler switch in Settings.</p>`
@@ -700,6 +759,7 @@ function drawStory() {
   pct.oninput = () => { st.savePct = pct.value; save(); const pos = pct.selectionStart; drawStory(); const p2 = $("#pct"); p2.focus(); try { p2.setSelectionRange(pos, pos) } catch {} }
   $("#applyGuess") && ($("#applyGuess").onclick = () => { const k = missionsDone(st.savePct, ms.length); ms.forEach((m, i) => { if (i < k) st.done[m.id] ||= Date.now(); else delete st.done[m.id] }); save(); drawStory() })
   b.querySelectorAll("[data-done]").forEach(r => r.onclick = () => { const id = r.dataset.done; st.done[id] ? delete st.done[id] : st.done[id] = Date.now(); save(); const y = $("#story").scrollTop; drawStory(); $("#story").scrollTop = y })
+  b.querySelectorAll("[data-list]").forEach(x => x.onclick = () => { setTab("map"); stack.length = 0; openList(x.dataset.list) })
   b.querySelectorAll("[data-step]").forEach(x => x.onclick = () => { const c = coll[x.dataset.step]; st.found[c.id] = Math.max(0, Math.min(c.total, (st.found[c.id] || 0) + +x.dataset.k)); save(); x.parentElement.querySelector("output").textContent = `${st.found[c.id]}/${c.total}` })
 }
 
@@ -723,6 +783,17 @@ $("#searchBtn").onclick = () => openSearch()
 
 // ---------- start ----------
 drawWorld(); drawChips(); applySettings()
+// first run: three hints in one card, once
+if (!st.hinted) {
+  const h = document.createElement("div"); h.className = "hint glass"; h.setAttribute("role", "dialog"); h.setAttribute("aria-label", "Getting started")
+  h.innerHTML = `<b>Welcome to Leonida</b>
+    <p>${icon("map")}<span>Tap a region to zoom in. Tap a pin for its card.</span></p>
+    <p>${icon("search")}<span>Search finds any place, mission or collectible.</span></p>
+    <p>${icon("story")}<span>Story tracks your run. Type your save % to jump in.</span></p>
+    <button class="act on" id="hintOk">Got it</button>`
+  document.body.appendChild(h)
+  $("#hintOk").onclick = () => { st.hinted = true; save(false); h.classList.add("gone"); setTimeout(() => h.remove(), 300) }
+}
 function onResize() { const f = fitView(); const first = fitS === 1; fitS = f.s; if (first) Object.assign(view, f); else clamp(view); render() }
 addEventListener("resize", onResize); onResize()
 setTimeout(() => pinEls.forEach(b => b.classList.remove("drop")), 900)

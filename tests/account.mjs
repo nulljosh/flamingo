@@ -16,6 +16,7 @@ check(su.ok && !!link, "account created and confirmed on the local API")
 const b = await chromium.launch({ channel: "chrome" })
 for (const theme of ["light", "dark"]) {
   const ctx = await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 3, colorScheme: theme }), p = await ctx.newPage()
+  await p.addInitScript(() => { if (!localStorage.getItem("flamingo.v1")) localStorage.setItem("flamingo.v1", JSON.stringify({ hinted: true })) })
   await p.goto(`${web}/app/?api=${encodeURIComponent(api)}#settings`); await p.waitForTimeout(1200)
   await p.click("#acOpen"); await p.fill("#acEmail", email); await p.fill("#acPass", password)
   await p.screenshot({ path: `docs/img/qa/phone-signin-${theme}.png` })
@@ -30,6 +31,7 @@ for (const theme of ["light", "dark"]) {
     check(rows[0]?.visited?.["ocean-beach"] > 0, "light: a visit syncs to the account", JSON.stringify(rows[0]?.visited))
     // a second device: fresh storage, sign in, the visit comes down
     const ctx2 = await b.newContext({ ...devices["iPhone 13"] }), p2 = await ctx2.newPage()
+    await p2.addInitScript(() => { if (!localStorage.getItem("flamingo.v1")) localStorage.setItem("flamingo.v1", JSON.stringify({ hinted: true })) })
     await p2.goto(`${web}/app/?api=${encodeURIComponent(api)}#settings`); await p2.waitForTimeout(1000)
     await p2.click("#acOpen"); await p2.fill("#acEmail", email); await p2.fill("#acPass", password); await p2.click("[data-do='in']"); await p2.waitForTimeout(2000)
     check((await p2.textContent(".stat b")).startsWith("1"), "a second device pulls the visit down")

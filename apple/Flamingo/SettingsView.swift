@@ -6,6 +6,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                AccountSection()
                 Section("Progress") {
                     HStack(spacing: 8) {
                         stat(D.data.places.filter { store.s.visited[$0.id] != nil }.count, D.pinned.filter { $0.cat != "people" }.count, "Places visited")
@@ -40,7 +41,7 @@ struct SettingsView: View {
                         .confirmationDialog("Reset all progress?", isPresented: $confirmReset, titleVisibility: .visible) {
                             Button("Reset progress", role: .destructive) { store.reset() }
                         } message: { Text("Visited places, finished missions and collectible counts are cleared.") }
-                } header: { Text("Data") } footer: { Text("Progress stays on this device. Nothing is sent anywhere.") }
+                } header: { Text("Data") } footer: { Text("Progress stays on this device unless you sign in; then it syncs to your account at api.jaybulb.com. Nothing else is collected.") }
                 Section {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
                     LabeledContent("Map data", value: D.data.updated)

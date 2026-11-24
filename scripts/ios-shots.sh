@@ -16,6 +16,7 @@ for t in light dark; do
   # warm up: the first launch after an appearance change is slow
   xcrun simctl ui "$D" appearance "$t" >/dev/null 2>&1; xcrun simctl launch "$D" $APP $T >/dev/null; sleep 8
   shot map $t $T
+  shot hint $t $T -qaHint
   shot vicecity $t $T -qaZoom 846,826,5.2
   SIMCTL_CHILD_QA_QUERY=garage; export SIMCTL_CHILD_QA_QUERY
   shot search $t $T -qaRoute search
@@ -25,6 +26,8 @@ for t in light dark; do
   shot settings $t $T -qaVisited -qaTab settings
   shot story $t $T -qaVisited -qaPct 30 -qaTab story
   shot layers $t $T -qaVisited -qaRoute layers
+  shot mypin $t $T -qaPin -qaZoom 640,540,3 -qaRoute pin/uqa
+  [ -n "$QA_EMAIL" ] && shot account $t $T -qaVisited -qaTab settings -qaAPI http://localhost:8787 -qaLogin "$QA_EMAIL" "$QA_PASS"
 done
 # the landing page shows these
 [ "$OUT" = docs/img/qa ] && for n in map place settings story; do for t in light dark; do cp "$OUT/ios-$n-$t.png" "web/img/ios-$n-$t.png"; done; done && echo "landing iOS screenshots updated"

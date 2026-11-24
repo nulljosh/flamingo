@@ -4,11 +4,14 @@ import SwiftUI
 struct FlamingoApp: App {
     @StateObject private var store = Store()
     @StateObject private var model = MapModel()
+    @StateObject private var account = Account()
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(store)
                 .environmentObject(model)
+                .environmentObject(account)
+                .onAppear { store.account = account; account.store = store; Task { await account.pull() } }
                 .preferredColorScheme(store.scheme)
                 .tint(.pink)
         }
@@ -21,6 +24,7 @@ enum Tab { case map, story, settings }
 struct RootView: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var model: MapModel
+    @EnvironmentObject var account: Account
     @Environment(\.horizontalSizeClass) private var hsize
     @State private var tab: Tab = .map
     @Namespace private var ns
@@ -40,6 +44,7 @@ struct RootView: View {
                 .ignoresSafeArea(.container, edges: .bottom)
             if tab == .story { StoryView().transition(.opacity) }
             if tab == .settings { SettingsView().transition(.opacity) }
+            if tab == .map && store.s.hinted != true && (!store.isQA || ProcessInfo.processInfo.arguments.contains("-qaHint")) { hint.padding(.bottom, 92).transition(.move(edge: .bottom).combined(with: .opacity)) }
             dock.padding(.bottom, 8)
         }
         .background(Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.027, green: 0.125, blue: 0.165, alpha: 1) : UIColor(red: 0.761, green: 0.906, blue: 0.933, alpha: 1) }).ignoresSafeArea())
@@ -53,8 +58,24 @@ struct RootView: View {
                 set: { d in if model.route == .search { model.peek = d != .large } else { detentValue = d } })
     }
 
+    // first run: three hints in one card, once
+    private var hint: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Welcome to Leonida").font(.title3.bold())
+            ForEach([("map", "Tap a region to zoom in. Tap a pin for its card."), ("magnifyingglass", "Search finds any place, mission or collectible."), ("checklist", "Story tracks your run. Type your save % to jump in.")], id: \.0) { sym, text in
+                HStack(alignment: .top, spacing: 12) { Image(systemName: sym).foregroundStyle(Color.pink).frame(width: 22); Text(text).font(.subheadline).foregroundStyle(.secondary) }
+            }
+            Button { withAnimation { store.s.hinted = true } } label: { Text("Got it").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 46).foregroundStyle(.white).background(Color.pink, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }
+                .buttonStyle(.plain)
+        }
+        .padding(20)
+        .frame(maxWidth: 360)
+        .glass(RoundedRectangle(cornerRadius: 24, style: .continuous), interactive: false)
+        .padding(.horizontal, 16)
+    }
     private var dock: some View {
         HStack(spacing: 12) {
+            Spacer(minLength: 0)
             HStack(spacing: 0) {
                 tabButton(.map, "Map", "map")
                 tabButton(.story, "Story", "checklist")
@@ -71,7 +92,9 @@ struct RootView: View {
                 .accessibilityLabel("Search")
                 .transition(.scale.combined(with: .opacity))
             }
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity)   // always the full width, so the group stays centred with or without search
     }
     private func tabButton(_ t: Tab, _ title: String, _ symbol: String) -> some View {
         Button { tab = t } label: {
@@ -94,6 +117,7 @@ struct RootView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if arg("-qaTab") == "settings" { tab = .settings }
             if arg("-qaTab") == "story" { tab = .story }
+            if let i = a.firstIndex(of: "-qaLogin"), a.indices.contains(i + 2) { Task { await account.signIn(a[i + 1], a[i + 2]) } }
             if let z = arg("-qaZoom")?.split(separator: ",").compactMap({ Double($0) }), z.count == 3 {
                 let s = model.fitS * z[2]
                 model.go(Cam(s: s, x: model.size.width / 2 - z[0] * s, y: model.size.height * 0.42 - z[1] * s), animated: false)
@@ -103,6 +127,7 @@ struct RootView: View {
                 switch p.first {
                 case "search": model.open(.search)
                 case "layers": model.open(.layers)
+                case "pin": model.open(.pin(p[1]))
                 case "place": model.open(.place(p[1]))
                 case "region": model.open(.region(p[1]))
                 case "list": model.open(.list(p[1]))

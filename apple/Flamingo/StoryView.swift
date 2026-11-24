@@ -45,7 +45,9 @@ struct StoryView: View {
                             if k >= ms.count { Text("That's past the end of the story: all \(ms.count) missions are probably done.") }
                             else { Text("About ") + Text("\(k) of \(ms.count)").bold() + Text(" missions done. You're probably on ") + Text(whereText(ms[k])).bold() + Text(".") }
                             Button {
-                                for (i, m) in ms.enumerated() { if i < k { if store.s.done[m.id] == nil { store.s.done[m.id] = Date().timeIntervalSince1970 } } else { store.s.done[m.id] = nil } }
+                                var d = store.s.done
+                                for (i, m) in ms.enumerated() { if i < k { if d[m.id] == nil { d[m.id] = Store.nowMs } } else { d[m.id] = nil } }
+                                store.s.done = d
                                 focused = false
                             } label: {
                                 Label("Mark the first \(k) done", systemImage: "checkmark").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 50)
@@ -64,6 +66,21 @@ struct StoryView: View {
                         ForEach(cm) { m in row(m, isNext: m.id == next?.id) }
                     } header: {
                         HStack { Text(store.chapterName(cm[0])); Spacer(); Text("\(cm.filter { store.s.done[$0.id] != nil }.count) / \(cm.count)").monospacedDigit() }
+                    }
+                }
+                Section("Places") {
+                    ForEach(D.data.categories.filter { c in c.id != "people" && c.id != "vehicle" && D.pinned.contains { $0.cat == c.id } }) { c in
+                        let items = D.pinned.filter { $0.cat == c.id }, seen = items.filter { store.s.visited[$0.id] != nil }.count
+                        HStack(spacing: 12) {
+                            Badge(symbol: c.symbol, color: c.tint)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(c.name)
+                                HStack(spacing: 8) {
+                                    ProgressView(value: Double(seen), total: Double(max(1, items.count))).tint(c.tint).frame(maxWidth: 110)
+                                    Text("\(seen) / \(items.count) visited").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                                }
+                            }
+                        }
                     }
                 }
                 Section("Collectibles") {

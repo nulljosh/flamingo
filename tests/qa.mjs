@@ -17,7 +17,10 @@ async function phone(theme) {
   const ctx = await browser.newContext({ ...devices["iPhone 13"], colorScheme: theme, deviceScaleFactor: 3 })
   const page = await ctx.newPage(), errors = []
   page.on("pageerror", e => errors.push(e.message)); page.on("console", m => m.type() === "error" && errors.push(m.text()))
-  await page.goto(`${base}/app/`); await page.waitForSelector(".rcard"); await page.waitForTimeout(1200)
+  await page.goto(`${base}/app/`); await page.waitForSelector(".rcard"); await page.waitForTimeout(1300)
+  check(await page.isVisible(".hint"), `${theme}: first-run hint shows`)
+  await page.screenshot({ path: `${out}/phone-hint-${theme}.png` })
+  await page.click("#hintOk"); await page.waitForTimeout(400)
   return { ctx, page, errors }
 }
 const shot = (page, name) => page.screenshot({ path: `${out}/${name}.png` })
@@ -93,6 +96,24 @@ for (const theme of ["light", "dark"]) {
   await page.click("#tabMap"); await page.waitForTimeout(400)
   check(await page.isVisible("#sheet.open"), `${theme}: map tab brings the sheet back`)
 
+  // your own pin: long-press the map, name it, it stays on the map
+  await page.click("#sClose"); await page.waitForTimeout(300)
+  await page.evaluate(() => { const f = window.flamingo, w = innerWidth, h = innerHeight, s = f.view.s; f.setView({ s, x: w / 2 - 520 * s, y: h * .42 - 300 * s }) }); await page.waitForTimeout(300)
+  await page.mouse.move(200, 320); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(600)
+  check(await page.isVisible("#pinName"), `${theme}: long-press drops a pin and opens it`)
+  await page.fill("#pinName", "Hidden stash"); await page.fill("#pinNote", "Check the water tower"); await page.waitForTimeout(200)
+  check((await page.locator(".pin.mine").count()) === 1, `${theme}: the pin is on the map`)
+  await shot(page, `phone-mypin-${theme}`)
+  // save a place
+  await page.click("#sClose"); await page.click("#searchBtn"); await page.fill("#q", "vercetti"); await page.waitForTimeout(250)
+  await page.locator("#sheetBody [data-place='vercetti-estate']").click(); await page.waitForTimeout(700)
+  await page.click("#fav"); await page.waitForTimeout(150)
+  check((await page.textContent("#fav")).includes("Saved"), `${theme}: save a place`)
+  // recents: the garage search and the place opened from it
+  await page.click("#sClose"); await page.click("#searchBtn"); await page.waitForTimeout(300)
+  check((await page.locator("[data-q='garage']").count()) === 1 && (await page.locator("#sheetBody [data-place='shore-court-garage']").count()) >= 1, `${theme}: recents keep the search and the place`)
+  check((await page.locator("#sheetBody [data-pin]").count()) === 1 && (await page.locator("#sheetBody [data-place='vercetti-estate']").count()) >= 1, `${theme}: Saved lists the pin and the saved place`)
+  await shot(page, `phone-recents-${theme}`)
   // spoilers off by default: mission names hidden from search
   await page.click("#sClose"); await page.click("#searchBtn"); await page.fill("#q", "sinfrontera"); await page.waitForTimeout(200)
   check((await page.locator("#sheetBody [data-mission]").count()) === 0, `${theme}: mission names hidden without spoilers`)
@@ -106,6 +127,7 @@ for (const theme of ["light", "dark"]) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, colorScheme: "light" })
   const page = await ctx.newPage(), errors = []
   page.on("pageerror", e => errors.push(e.message))
+  await page.addInitScript(() => localStorage.setItem("flamingo.v1", JSON.stringify({ hinted: true })))
   await page.goto(`${base}/app/#region/vice-city`); await page.waitForSelector(".rcard"); await page.waitForTimeout(1400)
   const box = await page.locator("#sheet").boundingBox()
   check(box && box.x < 40 && box.width < 420, "desktop: sheet is a left panel", JSON.stringify(box))
@@ -123,7 +145,7 @@ await browser.close()
 // the landing page shows these exact screenshots
 if (!fails && out === "docs/img/qa") {
   const { copyFileSync } = await import("node:fs")
-  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "phone-story", "phone-checklist", "phone-layers", "phone-searchmap", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
+  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "phone-story", "phone-checklist", "phone-layers", "phone-searchmap", "phone-mypin", "phone-recents", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
   console.log("landing screenshots updated in web/img")
 }
 console.log(fails ? `${fails} FAILED` : "ALL PASS")

@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum Route: Hashable, Identifiable {
-    case search, layers, place(String), region(String), mission(String), collectible(String), list(String)
+    case search, layers, pin(String), place(String), region(String), mission(String), collectible(String), list(String)
     var id: String { "\(self)" }
 }
 
@@ -64,7 +64,9 @@ final class MapModel: ObservableObject {
         go(Cam(s: s, x: p.x - (p.x - cam.x) * k, y: p.y - (p.y - cam.y) * k))
     }
     func open(_ r: Route) {
-        if case .place(let id) = r { selected = id; if let p = D.places[id] { focus(p) } } else { selected = nil }
+        if case .place(let id) = r { selected = id; if let p = D.places[id] { focus(p) } }
+        else if case .pin(let id) = r { selected = id }
+        else { selected = nil }
         if r != .search { hits = nil; peek = false }
         route = r
     }
@@ -79,8 +81,9 @@ struct MapScreen: View {
         GeometryReader { geo in
             ZStack {
                 MapLayer(cam: model.cam, size: geo.size, selected: model.selected, filter: model.filter, hits: model.route == .search ? model.hits : nil, st: store.s, fitS: model.fitS,
-                         tapPlace: { model.open(.place($0)) }, tapGroup: { model.zoomTo($0) })
+                         tapPlace: { model.open(.place($0)) }, tapGroup: { model.zoomTo($0) }, tapPin: { model.open(.pin($0)) })
                     .gesture(pan.simultaneously(with: pinch))
+                    .simultaneousGesture(dropPin)
                     .onTapGesture(count: 2, coordinateSpace: .local) { model.zoom(2, at: $0) }
                     .ignoresSafeArea()
                 VStack(spacing: 0) {
@@ -117,6 +120,17 @@ struct MapScreen: View {
                 model.go(Cam(s: model.cam.s, x: s0.x + v.translation.width + flingX, y: s0.y + v.translation.height + flingY))
             }
     }
+    // long-press the map to drop your own pin there
+    private var dropPin: some Gesture {
+        LongPressGesture(minimumDuration: 0.5).sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+            .onEnded { v in
+                guard case .second(true, let drag?) = v, hypot(drag.translation.width, drag.translation.height) < 8 else { return }
+                let c = model.cam
+                let id = store.addPin(x: (drag.startLocation.x - c.x) / c.s, y: (drag.startLocation.y - c.y) / c.s)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                model.open(.pin(id))
+            }
+    }
     @State private var pinchStart: Cam?
     private var pinch: some Gesture {
         MagnifyGesture()
@@ -143,6 +157,7 @@ struct MapLayer: View, Animatable {
     let fitS: CGFloat
     let tapPlace: (String) -> Void
     let tapGroup: ([Place]) -> Void
+    var tapPin: (String) -> Void = { _ in }
     @Environment(\.colorScheme) private var scheme
 
     var animatableData: AnimatablePair<CGFloat, AnimatablePair<CGFloat, CGFloat>> {
@@ -195,6 +210,14 @@ struct MapLayer: View, Animatable {
                 }
             }
             labels(groups, z: z)
+            if !overview && hits == nil && (filter == nil || filter == "mypin") {
+                ForEach(st.pins ?? []) { p in
+                    MyPinView(selected: p.id == selected)
+                        .position(pt(p.x, p.y))
+                        .onTapGesture { tapPin(p.id) }
+                        .accessibilityLabel("\(p.name), your pin").accessibilityAddTraits(.isButton)
+                }
+            }
             ForEach(groups, id: \.key) { g in
                 if g.items.count == 1, let p = g.items.first {
                     PinView(place: p, selected: p.id == selected, visited: st.visited[p.id] != nil, letter: hits?.firstIndex(of: p.id).map { String(UnicodeScalar(65 + $0)!) })
@@ -335,6 +358,18 @@ struct PinView: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selected)
             .frame(width: 44, height: 44)
             .contentShape(Circle())
+    }
+}
+
+struct MyPinView: View {
+    let selected: Bool
+    var body: some View {
+        Image(systemName: "mappin").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+            .frame(width: 30, height: 30)
+            .background(UnevenRoundedRectangle(topLeadingRadius: 15, bottomLeadingRadius: 3, bottomTrailingRadius: 15, topTrailingRadius: 15).fill(Color.pink).rotationEffect(.degrees(-45)))
+            .shadow(color: .black.opacity(0.28), radius: 4, y: 3)
+            .scaleEffect(selected ? 1.4 : 1).animation(.spring(response: 0.3, dampingFraction: 0.6), value: selected)
+            .frame(width: 44, height: 44).contentShape(Rectangle())
     }
 }
 
