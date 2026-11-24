@@ -35,3 +35,16 @@ test("data holds together", () => {
   }
   for (const m of data.missions) if (m.at) assert.ok(ids.has(m.at))
 })
+
+import { missionsDone, estimate } from "../web/app/story.js"
+test("save percent maps onto the story", () => {
+  assert.equal(missionsDone(0, 91), 0)
+  assert.equal(missionsDone(30, 91), 46)      // half the story share
+  assert.equal(missionsDone(60, 91), 91)
+  assert.equal(missionsDone(100, 91), 91)
+  assert.equal(missionsDone(-5, 91), 0)
+  assert.equal(missionsDone("abc", 91), 0)
+  const e = estimate(30, data.missions)
+  assert.equal(e.next.id, data.missions[46].id)
+  assert.equal(estimate(75, data.missions).finished, true)
+})

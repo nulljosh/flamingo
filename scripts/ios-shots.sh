@@ -22,6 +22,7 @@ for t in light dark; do
   unset SIMCTL_CHILD_QA_QUERY
   shot place $t $T -qaVisited -qaRoute place/shore-court-garage
   shot settings $t $T -qaVisited -qaTab settings
+  shot story $t $T -qaVisited -qaPct 30 -qaTab story
 done
 # the landing page shows these
-[ "$OUT" = docs/img/qa ] && for n in map place settings; do for t in light dark; do cp "$OUT/ios-$n-$t.png" "web/img/ios-$n-$t.png"; done; done && echo "landing iOS screenshots updated"
+[ "$OUT" = docs/img/qa ] && for n in map place settings story; do for t in light dark; do cp "$OUT/ios-$n-$t.png" "web/img/ios-$n-$t.png"; done; done && echo "landing iOS screenshots updated"

@@ -14,6 +14,7 @@ final class Store: ObservableObject {
         var visited: [String: Double] = [:]
         var done: [String: Double] = [:]
         var found: [String: Int] = [:]
+        var savePct: String? = nil
     }
     @Published var s: State { didSet { if !qa { save() } } }
     private var qa = false
@@ -26,6 +27,7 @@ final class Store: ObservableObject {
         qa = args.contains { $0.hasPrefix("-qa") }   // QA runs never overwrite the saved state
         if args.contains("-qaDark") { s.theme = "dark" }
         if args.contains("-qaLight") { s.theme = "light" }
+        if let i = args.firstIndex(of: "-qaPct"), args.indices.contains(i + 1) { s.savePct = args[i + 1] }
         if args.contains("-qaVisited") { s.visited["shore-court-garage"] = 1; s.visited["ocean-beach"] = 1; s.done["m1-01"] = 1; s.found["cocaine-flamingos"] = 12 }
     }
     private func save() { if let d = try? JSONEncoder().encode(s) { UserDefaults.standard.set(d, forKey: key) } }

@@ -1,6 +1,7 @@
 // Flamingo: a map of Leonida. One data file (data/leonida.json), drawn as SVG, with pins as HTML so they stay one size
 // at any zoom. Two tabs (Map, Settings), a search button, and one sheet that shows search, a place, or a list.
 import { search, norm } from "./search.js"
+import { estimate, missionsDone, STORY_SHARE } from "./story.js"
 
 const $ = s => document.querySelector(s)
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
@@ -18,7 +19,7 @@ const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
 const KEY = "flamingo.v1"
-const DEF = { theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
+const DEF = { savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
 const st = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") } } catch { return { ...DEF } } })()
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
 const dark = matchMedia("(prefers-color-scheme: dark)")
@@ -197,7 +198,7 @@ mapEl.addEventListener("wheel", e => {
   else setView({ x: view.x - e.deltaX, y: view.y - e.deltaY })
 }, { passive: false })
 addEventListener("keydown", e => {
-  if (document.body.classList.contains("on-settings") || e.target.closest("input")) return
+  if (document.body.classList.contains("on-page") || e.target.closest("input")) return
   const { w, h } = size()
   if (e.key === "+" || e.key === "=") zoomAt(1.6, w / 2, h / 2, true)
   else if (e.key === "-") zoomAt(1 / 1.6, w / 2, h / 2, true)
@@ -527,6 +528,7 @@ function drawSettings() {
       <div class="row"><span class="t"><b>Version</b></span><span class="val">1.0.0</span></div>
       <div class="row"><span class="t"><b>Map data</b></span><span class="val">${new Date(data.updated + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></div>
       <a class="row link" href="https://github.com/nulljosh/flamingo"><span class="t"><b>Source code</b></span></a>
+      <a class="row link" href="/brand/"><span class="t"><b>Brand kit</b></span></a>
       <a class="row link" href="mailto:info@jaybulb.com?subject=Flamingo%20map"><span class="t"><b>Report a wrong pin</b></span></a>
     </div>
     <p class="foot">${esc(data.disclaimer)} Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps.</p>`
@@ -546,18 +548,49 @@ function drawSettings() {
 }
 function applySettings() { mapEl.classList.toggle("tints", !!st.regions); queue() }
 
+// ---------- story: the mission checklist, and a guess from the save's completion % ----------
+function drawStory() {
+  const ms = data.missions, n = ms.filter(m => st.done[m.id]).length
+  const next = ms.find(m => !st.done[m.id])
+  const g = st.savePct !== "" ? estimate(st.savePct, ms) : null
+  const where = m => `${chapterName(m)}, mission ${m.n}${st.spoilers && m.name ? `: ${m.name}` : ""}`
+  $("#storyBody").innerHTML = `<h1>Story</h1>
+    <div class="big"><p class="num">${n}<small> / ${ms.length} missions</small></p><div class="bar"><i style="width:${n / ms.length * 100}%"></i></div>
+      <p class="next">${next ? `Next up: <b>${esc(where(next))}</b>` : "<b>Story complete.</b>"}</p></div>
+    <p class="sec">Where am I?</p>
+    <div class="group">
+      <div class="guess"><label for="pct">Completion on your save</label><span class="pct"><input id="pct" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="0" value="${esc(st.savePct)}">%</span></div>
+      <div class="guess-out" id="guessOut">${g ? (g.finished ? `That's past the end of the story: <b>all ${ms.length} missions</b> are probably done.` : `About <b>${g.done} of ${ms.length}</b> missions done. You're probably on <b>${esc(where(g.next))}</b>.`) + `<button class="act" id="applyGuess">${icon("check")}Mark the first ${g.done} done</button>` : "Enter the % from your save's pause menu and Flamingo guesses where you are."}</div>
+    </div>
+    <p class="foot">A guess. It assumes the story is about ${STORY_SHARE}% of a 100% save, as in GTA V. Rockstar hasn't published the real weights.</p>
+    ${[1, 2, 3, 4, 5].map(ch => { const cm = ms.filter(m => m.chapter === ch), d = cm.filter(m => st.done[m.id]).length
+      return `<p class="sec chap">${esc(chapterName(cm[0]))}<span>${d} / ${cm.length}</span></p><div class="group">${cm.map(m => `<button class="row${st.done[m.id] ? " on" : ""}${next && m.id === next.id ? " nextup" : ""}" data-done="${m.id}" aria-pressed="${!!st.done[m.id]}"><span class="chk">${icon("check")}</span><span class="t"><b>${esc(missionName(m))}</b><small>${esc(who(m))}</small></span>${m.heist ? '<span class="heist">Heist</span>' : ""}</button>`).join("")}</div>` }).join("")}
+    <p class="sec">Collectibles</p>
+    <div class="group">${data.collectibles.map(c => `<div class="row"><span class="ic" style="--c:#ff9500">${icon("collectible")}</span><span class="t"><b>${esc(c.name)}</b><small>${c.total} in Leonida</small></span><span class="mini"><button data-step="${c.id}" data-k="-1" aria-label="One fewer ${esc(c.name)}">${icon("minus")}</button><output>${st.found[c.id] || 0}/${c.total}</output><button data-step="${c.id}" data-k="1" aria-label="One more ${esc(c.name)}">${icon("plus")}</button></span></div>`).join("")}</div>
+    <p class="foot">Mission names follow the spoiler switch in Settings.</p>`
+  const b = $("#storyBody")
+  const pct = $("#pct")
+  pct.oninput = () => { st.savePct = pct.value; save(); const pos = pct.selectionStart; drawStory(); const p2 = $("#pct"); p2.focus(); try { p2.setSelectionRange(pos, pos) } catch {} }
+  $("#applyGuess") && ($("#applyGuess").onclick = () => { const k = missionsDone(st.savePct, ms.length); ms.forEach((m, i) => { if (i < k) st.done[m.id] ||= Date.now(); else delete st.done[m.id] }); save(); drawStory() })
+  b.querySelectorAll("[data-done]").forEach(r => r.onclick = () => { const id = r.dataset.done; st.done[id] ? delete st.done[id] : st.done[id] = Date.now(); save(); const y = $("#story").scrollTop; drawStory(); $("#story").scrollTop = y })
+  b.querySelectorAll("[data-step]").forEach(x => x.onclick = () => { const c = coll[x.dataset.step]; st.found[c.id] = Math.max(0, Math.min(c.total, (st.found[c.id] || 0) + +x.dataset.k)); save(); x.parentElement.querySelector("output").textContent = `${st.found[c.id]}/${c.total}` })
+}
+
 // ---------- tabs ----------
+const TABS = ["map", "story", "settings"]
 function setTab(t) {
-  const s = t === "settings"
-  document.body.classList.toggle("on-settings", s)
-  $("#tabMap").setAttribute("aria-selected", !s); $("#tabSettings").setAttribute("aria-selected", s)
-  $("#tabPill").style.transform = s ? "translateX(96px)" : ""
-  if (s) { drawSettings(); sheet.classList.remove("open"); document.body.classList.remove("sheet-open") }
-  else if (stack.length) showSheet()
-  if (s) history.replaceState(null, "", location.pathname + location.search + "#settings")
-  else if (location.hash === "#settings") history.replaceState(null, "", location.pathname + location.search)
+  const page = t !== "map"
+  document.body.classList.toggle("on-page", page)
+  document.body.classList.toggle("on-story", t === "story"); document.body.classList.toggle("on-settings", t === "settings")
+  $("#tabMap").setAttribute("aria-selected", t === "map"); $("#tabStory").setAttribute("aria-selected", t === "story"); $("#tabSettings").setAttribute("aria-selected", t === "settings")
+  $("#tabPill").style.transform = `translateX(${TABS.indexOf(t) * 88}px)`
+  if (t === "settings") drawSettings()
+  if (t === "story") drawStory()
+  if (page) { sheet.classList.remove("open"); document.body.classList.remove("sheet-open"); history.replaceState(null, "", location.pathname + location.search + "#" + t) }
+  else { if (stack.length) showSheet(); if (location.hash === "#settings" || location.hash === "#story") history.replaceState(null, "", location.pathname + location.search) }
 }
 $("#tabMap").onclick = () => setTab("map")
+$("#tabStory").onclick = () => setTab("story")
 $("#tabSettings").onclick = () => setTab("settings")
 $("#searchBtn").onclick = () => openSearch()
 
@@ -569,8 +602,8 @@ setTimeout(() => pinEls.forEach(b => b.classList.remove("drop")), 900)
 // deep links: #place/<id>, #region/<id>, #mission/<id>, #list/<id>, #search, #settings
 function route() {
   const [kind, raw] = location.hash.slice(1).split("/"), id = decodeURIComponent(raw || "")
-  if (kind === "settings") return setTab("settings")
-  if (document.body.classList.contains("on-settings")) setTab("map")
+  if (kind === "settings" || kind === "story") return setTab(kind)
+  if (document.body.classList.contains("on-page")) setTab("map")
   if (kind === "place" && place[id]) openPlace(id, { fromMap: true })
   else if (kind === "region" && region[id]) { stack.length = 0; push({ type: "region", id }); zoomToItems(pinned.filter(p => p.region === id)) }
   else if (kind === "mission" && mission[id]) { stack.length = 0; push({ type: "mission", id }) }

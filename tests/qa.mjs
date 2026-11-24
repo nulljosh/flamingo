@@ -59,6 +59,19 @@ for (const theme of ["light", "dark"]) {
   check(await page.isVisible("#settings h1"), `${theme}: settings tab`)
   check((await page.textContent(".stat b")).startsWith("1"), `${theme}: progress counts the visit`)
   await shot(page, `phone-settings-${theme}`)
+  // story: the checklist and the save-% guess
+  await page.click("#tabStory"); await page.waitForTimeout(400)
+  check(await page.isVisible("#story h1"), `${theme}: story tab`)
+  await page.fill("#pct", "30"); await page.waitForTimeout(200)
+  check((await page.textContent("#guessOut")).includes("46 of 91"), `${theme}: 30% guesses 46 of 91 missions`)
+  await page.click("#applyGuess"); await page.waitForTimeout(200)
+  check((await page.textContent("#storyBody .num")).startsWith("46"), `${theme}: applying the guess ticks 46 missions`)
+  await page.locator("[data-done='m3-02']").click(); await page.waitForTimeout(150)
+  check((await page.textContent("#storyBody .num")).startsWith("45"), `${theme}: tapping a mission unticks it`)
+  await page.evaluate(() => document.querySelector("#story").scrollTo(0, 0)); await page.waitForTimeout(200)
+  await shot(page, `phone-story-${theme}`)
+  await page.evaluate(() => { const r = document.querySelector(".row.nextup"); document.querySelector("#story").scrollTo(0, r.offsetTop - 260) }); await page.waitForTimeout(250)
+  await shot(page, `phone-checklist-${theme}`)
   await page.click("#tabMap"); await page.waitForTimeout(400)
   check(await page.isVisible("#sheet.open"), `${theme}: map tab brings the sheet back`)
 
@@ -92,7 +105,7 @@ await browser.close()
 // the landing page shows these exact screenshots
 if (!fails && out === "docs/img/qa") {
   const { copyFileSync } = await import("node:fs")
-  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
+  for (const n of ["phone-search", "phone-vicecity", "phone-place", "phone-browse", "phone-settings", "phone-story", "phone-checklist", "desktop-region"]) for (const t of ["light", "dark"]) copyFileSync(`${out}/${n}-${t}.png`, `web/img/${n}-${t}.png`)
   console.log("landing screenshots updated in web/img")
 }
 console.log(fails ? `${fails} FAILED` : "ALL PASS")

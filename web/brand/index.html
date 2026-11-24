@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flamingo brand kit</title>
+<meta name="description" content="Flamingo's logo, colour, type, glass and components on one page.">
+<link rel="icon" href="/icon.svg">
+<link rel="stylesheet" href="https://jaybulb.com/tokens.css">
+<link rel="stylesheet" href="/palette.css?v=1">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-size: 17px; line-height: 26px; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; font-size: 15px; color: var(--text2); }
+.top a { text-decoration: none; } .top a:hover { color: var(--text); }
+header { padding: 56px 0 48px; text-align: center; }
+header img { width: 128px; height: 128px; filter: drop-shadow(0 20px 40px rgba(255, 45, 85, .3)); }
+h1 { font-size: clamp(44px, 7vw, 72px); line-height: 1.04; letter-spacing: -.03em; font-weight: 700; margin-top: 28px; }
+header p { max-width: 560px; margin: 20px auto 0; color: var(--text2); }
+section { padding: 56px 0; border-top: 1px solid var(--border); }
+h2 { font-size: 34px; line-height: 41px; letter-spacing: -.02em; font-weight: 700; margin-bottom: 8px; }
+.sub { color: var(--text2); margin-bottom: 32px; max-width: 640px; }
+.files { color: var(--text2); font-size: 15px; margin-top: 24px; }
+.files a { color: var(--fl-pink-ink); }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.tile { border-radius: var(--fl-r-xl); padding: 28px 24px; background: var(--bg2); display: grid; place-items: center; gap: 14px; text-align: center; font-size: 15px; color: var(--text2); min-height: 220px; }
+.tile.ink { background: #0b0b0c; color: #a1a1a6; } .tile.paper { background: #fff; color: #6e6e73; border: 1px solid #e5e5ea; } .tile.pink { background: var(--fl-pink); color: #fff; }
+.tile img, .tile svg { width: 104px; height: 104px; }
+.word { display: flex; align-items: center; gap: 14px; font-size: 44px; font-weight: 700; letter-spacing: -.035em; line-height: 1; }
+.word svg { width: 52px; height: 52px; }
+.tile.wide { grid-column: span 2; } @media (max-width: 600px) { .tile.wide { grid-column: auto; } .word { font-size: 34px; } }
+.sw { border-radius: 20px; overflow: hidden; border: 1px solid var(--border); font-size: 15px; background: var(--bg); }
+.sw i { display: block; height: 88px; }
+.sw div { padding: 12px 16px; } .sw b { display: block; } .sw code { color: var(--text2); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 6px; border-radius: 18px; background: var(--bg2); font-size: 15px; font-weight: 600; }
+.chip i { width: 26px; height: 26px; border-radius: 50%; background: var(--c); }
+.type p { padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.type small { color: var(--text2); font-size: 13px; white-space: nowrap; font-family: var(--font-code, ui-monospace, monospace); }
+.alpha { font-size: clamp(28px, 5vw, 48px); line-height: 1.2; letter-spacing: -.02em; font-weight: 600; word-break: break-word; }
+/* glass on a map: the real chrome over a piece of the real map */
+.stage { position: relative; border-radius: var(--fl-r-xl); overflow: hidden; height: 300px; background: linear-gradient(135deg, #d4ebcb 0 30%, #e4f0d2 30% 55%, #cfe2f0 55%); }
+.stage::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.8) 22px 24px), repeating-linear-gradient(0deg, transparent 0 22px, rgba(255,255,255,.8) 22px 24px); opacity: .5; mask-image: radial-gradient(circle at 70% 40%, #000 0 30%, transparent 60%); }
+.pin { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0,0,0,.28); }
+.dock { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; display: flex; gap: 12px; align-items: center; }
+.tabbar { display: flex; padding: 4px; border-radius: 32px; }
+.tab { width: 84px; height: 56px; border-radius: 28px; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #1d1d1f; }
+.tab.on { background: rgba(120,120,128,.14); color: var(--fl-pink); }
+.round { width: 64px; height: 64px; border-radius: 32px; }
+.card { position: absolute; left: 20px; top: 20px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 6px 0 16px; border-radius: 22px; font-weight: 650; font-size: 16px; color: #1d1d1f; }
+.card b { min-width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; background: #ff2d55; color: #fff; font-size: 14px; }
+.comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.comp > div { border-radius: var(--fl-r-l); background: var(--bg2); padding: 20px; display: grid; gap: 12px; align-content: start; }
+.comp h3 { font-size: 15px; color: var(--text2); font-weight: 600; }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 52px; border-radius: 16px; font-weight: 600; font-size: 16px; background: rgba(120,120,128,.14); color: var(--fl-pink-ink); }
+.btn.on { background: var(--fl-pink); color: #fff; }
+.badge { justify-self: start; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; }
+.toggle { width: 51px; height: 31px; border-radius: 16px; background: #34c759; position: relative; } .toggle::after { content: ""; position: absolute; right: 2px; top: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.15); }
+ul.rules { list-style: none; display: grid; gap: 12px; color: var(--text2); max-width: 720px; }
+ul.rules b { color: var(--text); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+td, th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+th { color: var(--text2); font-weight: 600; font-size: 13px; }
+td code { font-size: 13px; color: var(--text2); }
+footer { padding: 48px 0 64px; text-align: center; color: var(--text2); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="top"><a href="/">&larr; Flamingo</a><a href="https://github.com/nulljosh/flamingo/blob/main/web/brand/BRAND.md">BRAND.md</a></div>
+<div class="wrap">
+<header>
+  <img src="icon.svg" alt="Flamingo icon: a white map pin on pink, holding a striped sunset">
+  <h1>Flamingo brand kit</h1>
+  <p>A pin and a sunset. White and cool greys, one flamingo pink, and glass over the map. The brand kit is who Flamingo is; the design system under it is how every screen gets built, on the web and in SwiftUI.</p>
+</header>
+
+<section>
+  <h2>Logo</h2>
+  <p class="sub">A map pin holding a Leonida sunset, striped like an old postcard. No text in the icon, no game art, never the letters GTA.</p>
+  <div class="row">
+    <div class="tile"><img src="icon.svg" alt=""><span>App icon</span></div>
+    <div class="tile paper"><svg viewBox="0 0 1024 1024" style="color:#ff2d55" role="img" aria-label="Mark in pink on white"><use href="mark.svg#m"/></svg><span>Mark, pink on white</span></div>
+    <div class="tile ink"><svg viewBox="0 0 1024 1024" style="color:#f5f5f7" role="img" aria-label="Mark in white on black"><use href="mark.svg#m"/></svg><span>Mark, white on black</span></div>
+    <div class="tile pink"><svg viewBox="0 0 1024 1024" style="color:#fff" role="img" aria-label="Mark in white on pink"><use href="mark.svg#m"/></svg><span>Mark, white on pink</span></div>
+    <div class="tile paper wide"><span class="word" style="color:#1d1d1f"><svg viewBox="0 0 1024 1024" style="color:#ff2d55"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark: the mark, then the name in Flamingo Sans Bold, tracking −3.5%</span></div>
+    <div class="tile ink wide"><span class="word" style="color:#f5f5f7"><svg viewBox="0 0 1024 1024" style="color:#ff375f"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark on dark</span></div>
+  </div>
+  <p class="files">Files: <a href="icon.svg">icon.svg</a> · <a href="/icon-512.png">icon-512.png</a> · <a href="/apple-touch-icon.png">apple-touch-icon.png</a> · <a href="mark.svg">mark.svg</a> (currentColor). Clear space: the pin's head width. Smallest size: 16 px.</p>
+</section>
+
+<section>
+  <h2>Colour</h2>
+  <p class="sub">White and cool greys carry everything. Pink is the one accent: the selected tab, actions, progress. Never beige, never purple.</p>
+  <div class="row">
+    <div class="sw"><i style="background:#ff2d55"></i><div><b>Flamingo pink</b><code>#ff2d55 / dark #ff375f</code></div></div>
+    <div class="sw"><i style="background:#d70f3c"></i><div><b>Pink ink</b><code>#d70f3c / dark #ff6482 · small text</code></div></div>
+    <div class="sw"><i style="background:linear-gradient(#ffcc00,#ff9500,#ff2d55)"></i><div><b>Sunset</b><code>#ffcc00 → #ff9500 → #ff2d55</code></div></div>
+    <div class="sw"><i style="background:#ffffff"></i><div><b>Paper</b><code>#ffffff / #000000</code></div></div>
+    <div class="sw"><i style="background:#f2f2f7"></i><div><b>Grouped</b><code>#f2f2f7 / #1c1c1e</code></div></div>
+    <div class="sw"><i style="background:#1d1d1f"></i><div><b>Ink</b><code>#1d1d1f / #f5f5f7</code></div></div>
+    <div class="sw"><i style="background:#cfe2f0"></i><div><b>Water</b><code>#cfe2f0 / #0b1722</code></div></div>
+    <div class="sw"><i style="background:#f7f8f9"></i><div><b>Land</b><code>#f7f8f9 / #1d2024</code></div></div>
+  </div>
+  <p class="sub" style="margin:40px 0 16px">Land cover, the same on every app</p>
+  <div class="row">
+    <div class="sw"><i style="background:#d4ebcb"></i><div><b>Forest</b><code>Mount Kalaga · #d4ebcb / #1c3021</code></div></div>
+    <div class="sw"><i style="background:#d2ece6"></i><div><b>Wetland</b><code>Grassrivers · #d2ece6 / #18302d</code></div></div>
+    <div class="sw"><i style="background:#e4f0d2"></i><div><b>Farmland</b><code>Ambrosia · #e4f0d2 / #252d20</code></div></div>
+    <div class="sw"><i style="background:#e8ebef"></i><div><b>City</b><code>Vice City · #e8ebef / #26292e</code></div></div>
+  </div>
+  <p class="sub" style="margin:40px 0 16px">Regions and categories: Apple system colours, one per thing</p>
+  <div class="chips" id="cats"></div>
+</section>
+
+<section>
+  <h2>Type</h2>
+  <p class="sub">Flamingo Sans is Inter (OFL), the same cut as Keyrate, with tabular figures, for the site. The apps use SF Pro, so they feel native. One scale, Apple's.</p>
+  <p class="alpha">Aa Bb Cc 0123456789<br>Every pin in Leonida.</p>
+  <div class="type" style="margin-top:24px">
+    <p><span style="font-size:72px;font-weight:700;letter-spacing:-.03em;line-height:1">Hero</span><small>72 / 700 / −3%</small></p>
+    <p><span style="font-size:34px;font-weight:700;letter-spacing:-.025em">Large title</span><small>34 / 700</small></p>
+    <p><span style="font-size:24px;font-weight:700;letter-spacing:-.02em">Card title</span><small>24 / 700</small></p>
+    <p><span style="font-size:17px">Body, list rows, notes</span><small>17 / 400</small></p>
+    <p><span style="font-size:15px;color:var(--text2)">Subhead: category · region</span><small>15 / 400</small></p>
+    <p><span style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Section header</span><small>13 / 600 / caps</small></p>
+    <p><span style="font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Region label on the map</span><small>12 / 700 / +14%</small></p>
+  </div>
+  <p class="files">Font: <a href="/fonts/KeyrateSans.woff2">FlamingoSans.woff2</a> (Inter, variable 100–900) · <a href="/fonts/OFL.txt">OFL.txt</a></p>
+</section>
+
+<section>
+  <h2>Glass</h2>
+  <p class="sub">Chrome floats over the map as Liquid Glass: blur and saturate what's under it, a bright rim on top, a soft shadow below. Content is never glass; only the controls on top of it.</p>
+  <div class="stage">
+    <span class="card fl-glass">Vice City <b>28</b></span>
+    <span class="pin" style="--c:#34c759;left:58%;top:30%"></span><span class="pin" style="--c:#ff9500;left:66%;top:46%"></span><span class="pin" style="--c:#007aff;left:74%;top:34%"></span><span class="pin" style="--c:#ff2d55;left:80%;top:52%"></span>
+    <div class="dock"><div class="tabbar fl-glass"><span class="tab on">Map</span><span class="tab">Story</span><span class="tab">Settings</span></div><span class="round fl-glass"></span></div>
+  </div>
+  <table style="margin-top:24px">
+    <tr><th>Token</th><th>Web</th><th>SwiftUI</th></tr>
+    <tr><td>Glass</td><td><code>blur(22px) saturate(190%), rgba(255,255,255,.62)</code></td><td><code>.glassEffect(.regular.interactive()) on iOS 26, .regularMaterial before</code></td></tr>
+    <tr><td>Radii</td><td><code>12 · 16 · 24 · 32, capsules for chips and the dock</code></td><td><code>RoundedRectangle(cornerRadius:, style: .continuous)</code></td></tr>
+    <tr><td>Grid</td><td><code>8 pt; 16 pt screen margins; 44 pt minimum hit area</code></td><td><code>same</code></td></tr>
+    <tr><td>Motion</td><td><code>.42s cubic-bezier(.25,1.1,.4,1) for sheets; springs for pins</code></td><td><code>.smooth(duration: 0.45), .spring(response: 0.3)</code></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Components</h2>
+  <p class="sub">The parts every screen is built from.</p>
+  <div class="comp">
+    <div><h3>Pins and clusters</h3><div style="display:flex;gap:18px;align-items:center;padding:8px 4px"><span class="pin" style="--c:#34c759;position:static;display:inline-block"></span><span class="pin" style="--c:#ff9500;position:static;display:inline-block;scale:1.4;box-shadow:0 0 0 2px #fff,0 0 0 7px rgba(255,149,0,.3)"></span><span style="width:36px;height:36px;border-radius:50%;background:#8e8e93;color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;box-shadow:0 0 0 2px #fff,0 0 0 6px rgba(142,142,147,.22)">12</span></div><span style="font-size:13px;color:var(--text2)">30 pt pin in its category colour; selected grows 1.45×; overlapping pins group into a count</span></div>
+    <div><h3>Actions</h3><span class="btn on">Visited</span><span class="btn">Share</span></div>
+    <div><h3>Confidence</h3><span class="badge" style="background:rgba(52,199,89,.16);color:#1f8a3b">Confirmed by Rockstar</span><span class="badge" style="background:rgba(0,122,255,.14);color:#0062cc">Seen in official footage</span><span class="badge" style="background:rgba(255,149,0,.16);color:#b25e00">Fan theory</span></div>
+    <div><h3>Settings row</h3><div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:16px;padding:12px 16px"><span>Place names</span><span class="toggle"></span></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Voice and rules</h2>
+  <ul class="rules">
+    <li><b>Plain and short.</b> "Mark visited", "Next up", "Where am I?". No hype, no game slang in the chrome.</li>
+    <li><b>Honest about the data.</b> Every place says how sure we are. Pins are approximate, and the page says so.</li>
+    <li><b>No spoilers by default.</b> Mission and chapter names stay hidden until the player turns them on.</li>
+    <li><b>Unofficial, always.</b> Keep the not-affiliated line. No Rockstar logos, art, map imagery or the letters GTA in the name or icon.</li>
+    <li><b>No beige, no purple, no emojis, no serif.</b></li>
+  </ul>
+</section>
+</div>
+<footer>Flamingo brand kit · <a href="/">flamingo.jaybulb.com</a> · Apache 2.0, Inter under the OFL</footer>
+<script type="module">
+const d = await (await fetch("/data/leonida.json")).json()
+document.getElementById("cats").innerHTML = [...d.regions.map(r => [r.name, r.color]), ...d.categories.map(c => [c.name, c.color])].map(([n, c]) => `<span class="chip" style="--c:${c}"><i></i>${n} <code style="color:var(--text2);font-size:12px;font-weight:400">${c}</code></span>`).join("")
+</script>
+</body>
+</html>

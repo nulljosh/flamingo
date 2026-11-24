@@ -1,0 +1,18 @@
+/* Flamingo design tokens. The web app (web/app/app.css) and the SwiftUI app use the same values. */
+:root {
+  --fl-pink: #ff2d55; --fl-pink-ink: #d70f3c;
+  --fl-sun-1: #ffcc00; --fl-sun-2: #ff9500;
+  --fl-water: #cfe2f0; --fl-land: #f7f8f9;
+  --fl-forest: #d4ebcb; --fl-wetland: #d2ece6; --fl-farm: #e4f0d2; --fl-city: #e8ebef;
+  --fl-r-s: 12px; --fl-r-m: 16px; --fl-r-l: 24px; --fl-r-xl: 32px;
+  --fl-glass: rgba(255, 255, 255, .62); --fl-glass-edge: rgba(255, 255, 255, .75);
+  --fl-glass-shadow: 0 8px 32px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .08);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --fl-pink: #ff375f; --fl-pink-ink: #ff6482;
+  --fl-water: #0b1722; --fl-land: #1d2024;
+  --fl-glass: rgba(36, 36, 40, .56); --fl-glass-edge: rgba(255, 255, 255, .14);
+  --fl-glass-shadow: 0 8px 32px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+} }
+.fl-glass { background: var(--fl-glass); -webkit-backdrop-filter: blur(22px) saturate(190%); backdrop-filter: blur(22px) saturate(190%);
+            box-shadow: var(--fl-glass-shadow), inset 0 1px 0 var(--fl-glass-edge), inset 0 0 0 .5px rgba(0, 0, 0, .06); }

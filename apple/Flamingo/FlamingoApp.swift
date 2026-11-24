@@ -15,7 +15,7 @@ struct FlamingoApp: App {
     }
 }
 
-enum Tab { case map, settings }
+enum Tab { case map, story, settings }
 
 // Two tabs and a search button in a floating glass dock, as on iOS 26. The sheet holds search and details.
 struct RootView: View {
@@ -38,6 +38,7 @@ struct RootView: View {
                     }
                 }
                 .ignoresSafeArea(.container, edges: .bottom)
+            if tab == .story { StoryView().transition(.opacity) }
             if tab == .settings { SettingsView().transition(.opacity) }
             dock.padding(.bottom, 8)
         }
@@ -55,6 +56,7 @@ struct RootView: View {
         HStack(spacing: 12) {
             HStack(spacing: 0) {
                 tabButton(.map, "Map", "map")
+                tabButton(.story, "Story", "checklist")
                 tabButton(.settings, "Settings", "slider.horizontal.3")
             }
             .padding(4)
@@ -77,7 +79,7 @@ struct RootView: View {
                 Text(title).font(.system(size: 11, weight: .semibold))
             }
             .foregroundStyle(tab == t ? Color.pink : .primary)
-            .frame(width: 92, height: 56)
+            .frame(width: 84, height: 56)
             .background { if tab == t { Capsule().fill(Color(uiColor: .tertiarySystemFill)).matchedGeometryEffect(id: "pill", in: ns) } }
         }
         .buttonStyle(.plain)
@@ -90,6 +92,7 @@ struct RootView: View {
         func arg(_ k: String) -> String? { a.firstIndex(of: k).flatMap { a.indices.contains($0 + 1) ? a[$0 + 1] : nil } }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if arg("-qaTab") == "settings" { tab = .settings }
+            if arg("-qaTab") == "story" { tab = .story }
             if let z = arg("-qaZoom")?.split(separator: ",").compactMap({ Double($0) }), z.count == 3 {
                 let s = model.fitS * z[2]
                 model.go(Cam(s: s, x: model.size.width / 2 - z[0] * s, y: model.size.height * 0.42 - z[1] * s), animated: false)
