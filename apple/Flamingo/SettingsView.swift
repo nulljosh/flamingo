@@ -52,6 +52,7 @@ struct SettingsView: View {
                 }
                 Color.clear.frame(height: 60).listRowBackground(Color.clear)
             }
+            .readableColumn()
             .navigationTitle("Settings")
         }
     }
@@ -63,7 +64,7 @@ struct SettingsView: View {
             ProgressView(value: Double(n), total: Double(max(1, of))).tint(.pink).padding(.top, 4)
         }
         .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     func exportURL() -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("flamingo-progress.json")

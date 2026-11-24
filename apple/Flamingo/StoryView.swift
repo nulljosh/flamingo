@@ -37,7 +37,7 @@ struct StoryView: View {
                             Text("%")
                         }
                         .font(.title3.weight(.semibold)).monospacedDigit()
-                        .padding(.horizontal, 12).frame(height: 44).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(.horizontal, 12).frame(height: 44).background(Color(uiColor: .tertiarySystemFill), in: Capsule())
                     }
                     if let p = Double(pct.replacingOccurrences(of: ",", with: ".")) {
                         let k = Story.missionsDone(p, total: ms.count)
@@ -50,8 +50,8 @@ struct StoryView: View {
                                 store.s.done = d
                                 focused = false
                             } label: {
-                                Label("Mark the first \(k) done", systemImage: "checkmark").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 50)
-                                    .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                Label("Mark the first \(k) done", systemImage: "checkmark").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48)
+                                    .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: Capsule())
                             }
                             .buttonStyle(.plain)
                         }
@@ -95,6 +95,7 @@ struct StoryView: View {
                 }
                 Color.clear.frame(height: 60).listRowBackground(Color.clear)
             }
+            .readableColumn()
             .navigationTitle("Story")
             .onAppear { pct = store.s.savePct ?? "" }
             .onChange(of: pct) { store.s.savePct = $0 }

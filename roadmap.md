@@ -41,3 +41,12 @@ Also fixed in 1.3.0: hidden pins were still drawn on the web, because `.pin { di
 - G6: a first-run card with three hints.
 - G3: long-press the map to drop your own pin (name and note), and save places with a star. Both sync (new `fav` and `pins` columns).
 - The iOS dock stays centred on every tab.
+
+## 2.0.0 (2026-11-24)
+- Gap matrix done (G1 to G6). An Apple pass over every screen: every control is 48 pt and a capsule, one set of radii (cards 28, lists 20, controls round), rows padded 12 by 16, thinner glass (blur 30), a 4 pt focus ring in the accent at 30%, a 34/40 large title at −2.2%.
+- iPad checked in the simulator (inspector column).
+
+## Next
+- Mac: the "Designed for iPad" build on Apple silicon, or a native target once this Mac can run Xcode 16+.
+- App Store listing and screenshots (needs Joshua's Apple login).
+- More pins as the community maps fill in: Ammu-Nations, stunt jumps, shipwrecks.

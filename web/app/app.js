@@ -20,7 +20,7 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
-const VERSION = "1.6.0"
+const VERSION = "2.0.0"
 let hits = null   // place ids matching the search, shown as lettered pins while the search is open
 const KEY = "flamingo.v1"
 const DEF = { fav: {}, pins: [], recentQ: [], recentP: [], hinted: false, savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }

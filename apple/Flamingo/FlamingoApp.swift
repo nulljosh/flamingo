@@ -65,12 +65,12 @@ struct RootView: View {
             ForEach([("map", "Tap a region to zoom in. Tap a pin for its card."), ("magnifyingglass", "Search finds any place, mission or collectible."), ("checklist", "Story tracks your run. Type your save % to jump in.")], id: \.0) { sym, text in
                 HStack(alignment: .top, spacing: 12) { Image(systemName: sym).foregroundStyle(Color.pink).frame(width: 22); Text(text).font(.subheadline).foregroundStyle(.secondary) }
             }
-            Button { withAnimation { store.s.hinted = true } } label: { Text("Got it").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 46).foregroundStyle(.white).background(Color.pink, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }
+            Button { withAnimation { store.s.hinted = true } } label: { Text("Got it").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48).foregroundStyle(.white).background(Color.pink, in: Capsule()) }
                 .buttonStyle(.plain)
         }
         .padding(20)
         .frame(maxWidth: 360)
-        .glass(RoundedRectangle(cornerRadius: 24, style: .continuous), interactive: false)
+        .glass(RoundedRectangle(cornerRadius: 28, style: .continuous), interactive: false)
         .padding(.horizontal, 16)
     }
     private var dock: some View {

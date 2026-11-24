@@ -62,3 +62,10 @@ func polygon(_ pts: [[Double]]) -> Path {
     p.closeSubpath()
     return p
 }
+
+// Lists on iPad and Mac: a readable column (about 680 pt), centred on the grouped background.
+extension View {
+    func readableColumn() -> some View {
+        self.frame(maxWidth: 720).frame(maxWidth: .infinity).background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+    }
+}

@@ -178,7 +178,7 @@ struct SearchScreen: View {
                         Section {
                             Button { model.peek = true; model.zoomTo(lettered.compactMap { D.places[$0] }, bottom: 440) } label: {
                                 Label("Show \(lettered.count) on the map", systemImage: "map").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48)
-                                    .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: Capsule())
                             }
                             .buttonStyle(.plain)
                             .listRowBackground(Color.clear).listRowInsets(EdgeInsets())
@@ -264,17 +264,17 @@ struct PlaceScreen: View {
                     HStack(spacing: 8) {
                         let v = store.s.visited[place.id] != nil
                         Button { store.toggleVisited(place.id) } label: {
-                            Label(v ? "Visited" : "Mark visited", systemImage: "checkmark").frame(maxWidth: .infinity).frame(height: 50)
-                                .foregroundStyle(v ? .white : .pink).background(v ? Color.pink : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            Label(v ? "Visited" : "Mark visited", systemImage: "checkmark").frame(maxWidth: .infinity).frame(height: 48)
+                                .foregroundStyle(v ? .white : .pink).background(v ? Color.pink : Color(uiColor: .tertiarySystemFill), in: Capsule())
                         }
                         let f = store.s.fav?[place.id] != nil
                         Button { store.toggleFav(place.id) } label: {
-                            Label(f ? "Saved" : "Save", systemImage: f ? "star.fill" : "star").frame(maxWidth: .infinity).frame(height: 50)
-                                .foregroundStyle(f ? .white : .pink).background(f ? Color.pink : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            Label(f ? "Saved" : "Save", systemImage: f ? "star.fill" : "star").frame(maxWidth: .infinity).frame(height: 48)
+                                .foregroundStyle(f ? .white : .pink).background(f ? Color.pink : Color(uiColor: .tertiarySystemFill), in: Capsule())
                         }
                         ShareLink(item: URL(string: "https://flamingo.jaybulb.com/app/#place/\(place.id)")!) {
-                            Label("Share", systemImage: "square.and.arrow.up").labelStyle(.iconOnly).frame(maxWidth: .infinity).frame(height: 50)
-                                .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            Label("Share", systemImage: "square.and.arrow.up").labelStyle(.iconOnly).frame(maxWidth: .infinity).frame(height: 48)
+                                .foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: Capsule())
                         }
                     }
                     .font(.body.weight(.semibold)).buttonStyle(.plain)
@@ -333,8 +333,8 @@ struct MissionScreen: View {
                     Header(symbol: "flag.fill", color: mission.heist ? .pink : .gray, title: store.missionName(mission), sub: "\(store.chapterName(mission)) · Mission \(mission.n)", badge: mission.heist ? ("Heist", .pink) : nil)
                     Text("Played as \(mission.who.isEmpty ? "Jason or Lucia" : mission.who.joined(separator: " and ")).\(store.s.spoilers ? "" : " The name is hidden; turn on spoilers in Settings to see it.")")
                     Button { store.toggleDone(mission.id) } label: {
-                        Label(done ? "Done" : "Mark done", systemImage: "checkmark").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 50)
-                            .foregroundStyle(done ? .white : .pink).background(done ? Color.pink : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        Label(done ? "Done" : "Mark done", systemImage: "checkmark").font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48)
+                            .foregroundStyle(done ? .white : .pink).background(done ? Color.pink : Color(uiColor: .tertiarySystemFill), in: Capsule())
                     }
                     .buttonStyle(.plain)
                 }
@@ -461,7 +461,7 @@ struct LayersScreen: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     func wide(_ t: String, _ f: @escaping () -> Void) -> some View {
-        Button(action: f) { Text(t).font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 44).foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }
+        Button(action: f) { Text(t).font(.body.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 48).foregroundStyle(.pink).background(Color(uiColor: .tertiarySystemFill), in: Capsule()) }
             .buttonStyle(.plain)
     }
 }

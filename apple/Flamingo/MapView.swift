@@ -104,6 +104,8 @@ struct MapScreen: View {
         let f = model.fit()
         model.fitS = f.s
         if first || model.route == nil { model.cam = f }
+        // the iPad inspector column changes the width: keep the picked place in view
+        else if let id = model.selected, let p = D.places[id] { model.focus(p) }
     }
     private var pan: some Gesture {
         DragGesture(minimumDistance: 2)
@@ -346,7 +348,7 @@ struct PinView: View {
             }
         }
             .overlay(Circle().stroke(.white, lineWidth: 2))
-            .background(Circle().fill(cat.tint.opacity(selected ? 0.3 : 0)).frame(width: 44, height: 44))
+            .background(Circle().fill(cat.tint.opacity(selected ? 0.3 : 0)).frame(width: 48, height: 48))
             .overlay(alignment: .bottomTrailing) {
                 if visited {
                     Image(systemName: "checkmark").font(.system(size: 7, weight: .black)).foregroundStyle(.white)
@@ -356,7 +358,7 @@ struct PinView: View {
             .shadow(color: .black.opacity(0.28), radius: 4, y: 3)
             .scaleEffect(selected ? 1.4 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selected)
-            .frame(width: 44, height: 44)
+            .frame(width: 48, height: 48)
             .contentShape(Circle())
     }
 }
@@ -369,7 +371,7 @@ struct MyPinView: View {
             .background(UnevenRoundedRectangle(topLeadingRadius: 15, bottomLeadingRadius: 3, bottomTrailingRadius: 15, topTrailingRadius: 15).fill(Color.pink).rotationEffect(.degrees(-45)))
             .shadow(color: .black.opacity(0.28), radius: 4, y: 3)
             .scaleEffect(selected ? 1.4 : 1).animation(.spring(response: 0.3, dampingFraction: 0.6), value: selected)
-            .frame(width: 44, height: 44).contentShape(Rectangle())
+            .frame(width: 48, height: 48).contentShape(Rectangle())
     }
 }
 
@@ -396,7 +398,7 @@ struct Chips: View {
                 Text(title).font(.system(size: 15, weight: .semibold))
             }
             .foregroundStyle(on ? (id == nil ? Color(uiColor: .systemBackground) : .white) : .primary)
-            .padding(.horizontal, 14).frame(height: 36)
+            .padding(.horizontal, 16).frame(height: 44)
             .background { if on { Capsule().fill(color ?? .primary) } }
             .glass(Capsule())
         }
@@ -409,16 +411,16 @@ struct Controls: View {
     var body: some View {
         VStack(spacing: 0) {
             Button { model.filter = nil; model.open(.layers) } label: {
-                Image(systemName: "square.3.layers.3d").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+                Image(systemName: "square.3.layers.3d").font(.system(size: 17, weight: .semibold)).frame(width: 48, height: 48)
             }
             .accessibilityLabel("Layers: choose what shows on the map")
             Divider().frame(width: 28)
             Button { model.go(model.fit()) } label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 17, weight: .semibold)).frame(width: 48, height: 48)
             }
             .accessibilityLabel("Show all of Leonida")
         }
         .buttonStyle(.plain)
-        .glass(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .glass(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
