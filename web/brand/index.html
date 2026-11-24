@@ -43,7 +43,7 @@ h2 { font-size: 34px; line-height: 41px; letter-spacing: -.02em; font-weight: 70
 .type small { color: var(--text2); font-size: 13px; white-space: nowrap; font-family: var(--font-code, ui-monospace, monospace); }
 .alpha { font-size: clamp(28px, 5vw, 48px); line-height: 1.2; letter-spacing: -.02em; font-weight: 600; word-break: break-word; }
 /* glass on a map: the real chrome over a piece of the real map */
-.stage { position: relative; border-radius: var(--fl-r-xl); overflow: hidden; height: 300px; background: linear-gradient(135deg, #d4ebcb 0 30%, #e4f0d2 30% 55%, #cfe2f0 55%); }
+.stage { position: relative; border-radius: var(--fl-r-xl); overflow: hidden; height: 300px; background: linear-gradient(135deg, #d4ebcb 0 30%, #e4f0d2 30% 55%, #c2e7ee 55%); }
 .stage::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.8) 22px 24px), repeating-linear-gradient(0deg, transparent 0 22px, rgba(255,255,255,.8) 22px 24px); opacity: .5; mask-image: radial-gradient(circle at 70% 40%, #000 0 30%, transparent 60%); }
 .pin { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0,0,0,.28); }
 .dock { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; display: flex; gap: 12px; align-items: center; }
@@ -52,7 +52,7 @@ h2 { font-size: 34px; line-height: 41px; letter-spacing: -.02em; font-weight: 70
 .tab.on { background: rgba(120,120,128,.14); color: var(--fl-pink); }
 .round { width: 64px; height: 64px; border-radius: 32px; }
 .card { position: absolute; left: 20px; top: 20px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 6px 0 16px; border-radius: 22px; font-weight: 650; font-size: 16px; color: #1d1d1f; }
-.card b { min-width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; background: #ff2d55; color: #fff; font-size: 14px; }
+.card b { min-width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; background: #ff3d8b; color: #fff; font-size: 14px; }
 .comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .comp > div { border-radius: var(--fl-r-l); background: var(--bg2); padding: 20px; display: grid; gap: 12px; align-content: start; }
 .comp h3 { font-size: 15px; color: var(--text2); font-weight: 600; }
@@ -75,34 +75,35 @@ footer { padding: 48px 0 64px; text-align: center; color: var(--text2); font-siz
 <header>
   <img src="icon.svg" alt="Flamingo icon: a white map pin on pink, holding a striped sunset">
   <h1>Flamingo brand kit</h1>
-  <p>A pin and a sunset. White and cool greys, one flamingo pink, and glass over the map. The brand kit is who Flamingo is; the design system under it is how every screen gets built, on the web and in SwiftUI.</p>
+  <p>A pin and a Leonida sunset. White and cool greys, one Vice pink, teal water, and glass over the map. The brand kit is who Flamingo is; the design system under it is how every screen gets built, on the web and in SwiftUI.</p>
 </header>
 
 <section>
   <h2>Logo</h2>
-  <p class="sub">A map pin holding a Leonida sunset, striped like an old postcard. No text in the icon, no game art, never the letters GTA.</p>
+  <p class="sub">A white map pin over a striped sunset and teal water, in GTA VI's colours. No text in the icon, no game art, never the letters GTA.</p>
   <div class="row">
     <div class="tile"><img src="icon.svg" alt=""><span>App icon</span></div>
-    <div class="tile paper"><svg viewBox="0 0 1024 1024" style="color:#ff2d55" role="img" aria-label="Mark in pink on white"><use href="mark.svg#m"/></svg><span>Mark, pink on white</span></div>
+    <div class="tile paper"><svg viewBox="0 0 1024 1024" style="color:#ff3d8b" role="img" aria-label="Mark in pink on white"><use href="mark.svg#m"/></svg><span>Mark, pink on white</span></div>
     <div class="tile ink"><svg viewBox="0 0 1024 1024" style="color:#f5f5f7" role="img" aria-label="Mark in white on black"><use href="mark.svg#m"/></svg><span>Mark, white on black</span></div>
     <div class="tile pink"><svg viewBox="0 0 1024 1024" style="color:#fff" role="img" aria-label="Mark in white on pink"><use href="mark.svg#m"/></svg><span>Mark, white on pink</span></div>
-    <div class="tile paper wide"><span class="word" style="color:#1d1d1f"><svg viewBox="0 0 1024 1024" style="color:#ff2d55"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark: the mark, then the name in Flamingo Sans Bold, tracking −3.5%</span></div>
-    <div class="tile ink wide"><span class="word" style="color:#f5f5f7"><svg viewBox="0 0 1024 1024" style="color:#ff375f"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark on dark</span></div>
+    <div class="tile paper wide"><span class="word" style="color:#1d1d1f"><svg viewBox="0 0 1024 1024" style="color:#ff3d8b"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark: the mark, then the name in Flamingo Sans Bold, tracking −3.5%</span></div>
+    <div class="tile ink wide"><span class="word" style="color:#f5f5f7"><svg viewBox="0 0 1024 1024" style="color:#ff5fa2"><use href="mark.svg#m"/></svg>Flamingo</span><span>Wordmark on dark</span></div>
   </div>
   <p class="files">Files: <a href="icon.svg">icon.svg</a> · <a href="/icon-512.png">icon-512.png</a> · <a href="/apple-touch-icon.png">apple-touch-icon.png</a> · <a href="mark.svg">mark.svg</a> (currentColor). Clear space: the pin's head width. Smallest size: 16 px.</p>
 </section>
 
 <section>
   <h2>Colour</h2>
-  <p class="sub">White and cool greys carry everything. Pink is the one accent: the selected tab, actions, progress. Never beige, never purple.</p>
+  <p class="sub">GTA VI's sunset, without the violet. White and cool greys carry everything; Vice pink is the one accent (the selected tab, actions, progress); teal is the water.</p>
   <div class="row">
-    <div class="sw"><i style="background:#ff2d55"></i><div><b>Flamingo pink</b><code>#ff2d55 / dark #ff375f</code></div></div>
-    <div class="sw"><i style="background:#d70f3c"></i><div><b>Pink ink</b><code>#d70f3c / dark #ff6482 · small text</code></div></div>
-    <div class="sw"><i style="background:linear-gradient(#ffcc00,#ff9500,#ff2d55)"></i><div><b>Sunset</b><code>#ffcc00 → #ff9500 → #ff2d55</code></div></div>
+    <div class="sw"><i style="background:#ff3d8b"></i><div><b>Vice pink</b><code>#ff3d8b / dark #ff5fa2</code></div></div>
+    <div class="sw"><i style="background:#d0186b"></i><div><b>Pink ink</b><code>#d0186b / dark #ff7ab5 · small text</code></div></div>
+    <div class="sw"><i style="background:linear-gradient(#ff8a3d,#ff3d8b,#e81e74)"></i><div><b>Leonida sunset</b><code>#ff8a3d → #ff3d8b → #e81e74</code></div></div>
     <div class="sw"><i style="background:#ffffff"></i><div><b>Paper</b><code>#ffffff / #000000</code></div></div>
     <div class="sw"><i style="background:#f2f2f7"></i><div><b>Grouped</b><code>#f2f2f7 / #1c1c1e</code></div></div>
     <div class="sw"><i style="background:#1d1d1f"></i><div><b>Ink</b><code>#1d1d1f / #f5f5f7</code></div></div>
-    <div class="sw"><i style="background:#cfe2f0"></i><div><b>Water</b><code>#cfe2f0 / #0b1722</code></div></div>
+    <div class="sw"><i style="background:#14b8c4"></i><div><b>Sea teal</b><code>#14b8c4 / #0e8fa6</code></div></div>
+    <div class="sw"><i style="background:#c2e7ee"></i><div><b>Water</b><code>#c2e7ee / #07202a</code></div></div>
     <div class="sw"><i style="background:#f7f8f9"></i><div><b>Land</b><code>#f7f8f9 / #1d2024</code></div></div>
   </div>
   <p class="sub" style="margin:40px 0 16px">Land cover, the same on every app</p>
@@ -137,7 +138,7 @@ footer { padding: 48px 0 64px; text-align: center; color: var(--text2); font-siz
   <p class="sub">Chrome floats over the map as Liquid Glass: blur and saturate what's under it, a bright rim on top, a soft shadow below. Content is never glass; only the controls on top of it.</p>
   <div class="stage">
     <span class="card fl-glass">Vice City <b>28</b></span>
-    <span class="pin" style="--c:#34c759;left:58%;top:30%"></span><span class="pin" style="--c:#ff9500;left:66%;top:46%"></span><span class="pin" style="--c:#007aff;left:74%;top:34%"></span><span class="pin" style="--c:#ff2d55;left:80%;top:52%"></span>
+    <span class="pin" style="--c:#34c759;left:58%;top:30%"></span><span class="pin" style="--c:#ff9500;left:66%;top:46%"></span><span class="pin" style="--c:#007aff;left:74%;top:34%"></span><span class="pin" style="--c:#ff3d8b;left:80%;top:52%"></span>
     <div class="dock"><div class="tabbar fl-glass"><span class="tab on">Map</span><span class="tab">Story</span><span class="tab">Settings</span></div><span class="round fl-glass"></span></div>
   </div>
   <table style="margin-top:24px">

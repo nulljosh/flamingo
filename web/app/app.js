@@ -2,6 +2,8 @@
 // at any zoom. Two tabs (Map, Settings), a search button, and one sheet that shows search, a place, or a list.
 import { search, norm } from "./search.js"
 import { estimate, missionsDone, STORY_SHARE } from "./story.js"
+import { createClient } from "./spark.js"
+import { reconcile, toRow } from "./sync.js"
 
 const $ = s => document.querySelector(s)
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
@@ -18,12 +20,92 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
-const VERSION = "1.3.0"
+const VERSION = "1.4.0"
 let hits = null   // place ids matching the search, shown as lettered pins while the search is open
 const KEY = "flamingo.v1"
 const DEF = { savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
 const st = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") } } catch { return { ...DEF } } })()
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
+const save = (progress = true) => { if (progress && acct.user) { st.dirty = true; schedulePush() } try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
+
+// ---------- accounts: sign in with email to keep progress on every device (api.jaybulb.com, table flamingo_progress) ----------
+// ?api=http://localhost:8787 points a QA run at a local API; any other host is ignored, so a link can't send tokens elsewhere
+const apiParam = (() => { try { const u = new URL(new URLSearchParams(location.search).get("api")); return ["localhost", "127.0.0.1"].includes(u.hostname) ? u.origin : null } catch { return null } })()
+const sb = createClient(apiParam || "https://api.jaybulb.com")
+const acct = { user: null, mode: "out", msg: "", busy: false, syncedAt: 0 }
+let pushTimer = 0
+function schedulePush() { clearTimeout(pushTimer); pushTimer = setTimeout(pushProgress, 1500) }
+async function pushProgress() {
+  if (!acct.user) return
+  const { error } = await sb.from("flamingo_progress").upsert(toRow(acct.user.id, { visited: st.visited, done: st.done, found: st.found, savePct: st.savePct }), { onConflict: "id" })
+  if (!error) { st.dirty = false; st.linked = true; acct.syncedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} ; refreshAcct() }
+}
+async function pullProgress() {
+  if (!acct.user) return
+  const { data, error } = await sb.from("flamingo_progress").select("*")
+  if (error) return
+  const r = reconcile(st, data?.[0] || null)
+  Object.assign(st, { visited: r.progress.visited, done: r.progress.done, found: r.progress.found, savePct: r.progress.savePct })
+  if (r.push) { st.dirty = true; await pushProgress() } else { st.linked = true; acct.syncedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(st)) } catch {} }
+  queue(); refreshAcct()
+  if (document.body.classList.contains("on-story")) drawStory()
+}
+function refreshAcct() { if (document.body.classList.contains("on-settings")) drawSettings() }
+sb.auth.onAuthStateChange((event, session) => {
+  acct.user = session?.user || null
+  if (event === "PASSWORD_RECOVERY") { acct.mode = "reset"; setTab("settings") }
+  else acct.mode = acct.user ? "in" : (acct.mode === "form" ? "form" : "out")
+  if (acct.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) pullProgress()
+  if (!acct.user) { st.linked = false; st.dirty = false }
+  refreshAcct()
+})
+addEventListener("focus", () => acct.user && !st.dirty && pullProgress())
+function acctHTML() {
+  const m = acct.msg ? `<p class="acct-msg">${esc(acct.msg)}</p>` : ""
+  if (acct.mode === "in") {
+    const ago = acct.syncedAt ? Math.max(0, Math.round((Date.now() - acct.syncedAt) / 60000)) : null
+    return `<div class="row"><span class="ic" style="--c:var(--pink)">${icon("people")}</span><span class="t"><b>${esc(acct.user.email)}</b><small>${st.dirty ? "Syncing…" : ago == null ? "Signed in" : ago < 1 ? "Synced just now" : `Synced ${ago} min ago`}</small></span></div>
+      <button class="row link" id="acSync"><span class="t"><b>Sync now</b></span></button>
+      <button class="row link" id="acOut"><span class="t"><b>Sign out</b></span></button>
+      <button class="row danger" id="acDel"><span class="t"><b>Delete account</b></span></button>${m}`
+  }
+  if (acct.mode === "form" || acct.mode === "reset") {
+    const reset = acct.mode === "reset"
+    return `<form class="acct-form" id="acForm">
+      ${reset ? "" : `<input id="acEmail" type="email" autocomplete="email" placeholder="Email" required>`}
+      <input id="acPass" type="password" autocomplete="${reset ? "new-password" : "current-password"}" placeholder="${reset ? "New password" : "Password"}" minlength="8" required>
+      <div class="acct-btns">${reset ? `<button class="act on wide" type="submit" data-do="reset">Set new password</button>` : `<button class="act on" type="submit" data-do="in">Sign in</button><button class="act" type="submit" data-do="up">Create account</button>`}</div>
+      ${reset ? "" : `<button class="acct-link" type="button" id="acForgot">Forgot password?</button>`}${m}</form>`
+  }
+  return `<button class="row" id="acOpen"><span class="ic" style="--c:var(--pink)">${icon("people")}</span><span class="t"><b>Sign in or create an account</b><small>Keep your progress on every device</small></span>${icon("chev").replace('class="i"', 'class="i chev"')}</button>${m}`
+}
+function wireAcct(root) {
+  const set = (o) => { Object.assign(acct, o); drawSettings() }
+  root.querySelector("#acOpen")?.addEventListener("click", () => set({ mode: "form", msg: "" }))
+  root.querySelector("#acSync")?.addEventListener("click", () => { st.dirty ? pushProgress() : pullProgress() })
+  root.querySelector("#acOut")?.addEventListener("click", async () => { await sb.auth.signOut(); set({ mode: "out", msg: "Signed out. Your progress stays on this device." }) })
+  const del = root.querySelector("#acDel")
+  del?.addEventListener("click", async () => {
+    if (!del.dataset.armed) { del.dataset.armed = 1; del.querySelector("b").textContent = "Tap again to delete your account"; return }
+    const { error } = await sb.auth.deleteAccount(); set({ mode: "out", msg: error ? error.message : "Account deleted. Your progress stays on this device." })
+  })
+  root.querySelector("#acForgot")?.addEventListener("click", async () => {
+    const email = root.querySelector("#acEmail").value.trim(); if (!email) return set({ msg: "Type your email first." })
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/app/#settings` }); set({ msg: "If that email has an account, a reset link is on its way." })
+  })
+  const form = root.querySelector("#acForm")
+  form?.addEventListener("submit", async e => {
+    e.preventDefault(); const what = e.submitter?.dataset.do || "in"
+    const email = root.querySelector("#acEmail")?.value.trim(), password = root.querySelector("#acPass").value
+    form.querySelectorAll("button").forEach(b => b.disabled = true)
+    let r
+    if (what === "in") r = await sb.auth.signInWithPassword({ email, password })
+    else if (what === "up") r = await sb.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}/app/#settings` } })
+    else r = await sb.auth.updateUser({ password })
+    if (r.error) return set({ msg: r.error.message || "That didn't work. Try again." })
+    if (what === "up") return set({ mode: "form", msg: "Check your email to confirm, then sign in here." })
+    set({ mode: "in", msg: what === "reset" ? "Password changed." : "" })
+  })
+}
 const dark = matchMedia("(prefers-color-scheme: dark)")
 const applyTheme = () => { document.documentElement.dataset.theme = st.theme === "system" ? (dark.matches ? "dark" : "light") : st.theme }
 dark.addEventListener("change", applyTheme); applyTheme()
@@ -401,7 +483,7 @@ function showHits() {
   if (!wide) sheet.classList.add("peek")
   zoomToItems(hits.map(id => place[id]), wide ? 110 : innerHeight * .4 + 110)
 }
-const missionRow = m => row(`data-mission="${m.id}"`, "mission", m.heist ? "#ff2d55" : "#8e8e93", esc(missionName(m)) + (m.heist ? " · Heist" : ""), esc(`${chapterName(m)} · ${who(m)}`), st.done[m.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
+const missionRow = m => row(`data-mission="${m.id}"`, "mission", m.heist ? "#ff3d8b" : "#8e8e93", esc(missionName(m)) + (m.heist ? " · Heist" : ""), esc(`${chapterName(m)} · ${who(m)}`), st.done[m.id] ? icon("check").replace('class="i"', 'class="i done"') : undefined)
 const collRow = c => row(`data-coll="${c.id}"`, "collectible", "#ff9500", esc(c.name), `${st.found[c.id] || 0} of ${c.total} found`)
 function wire(root = body) {
   root.querySelectorAll("[data-place]").forEach(b => b.onclick = () => openPlace(b.dataset.place))
@@ -478,7 +560,7 @@ function drawRegion(v) {
 }
 function drawMission(v) {
   const m = mission[v.id], at = m.at && place[m.at]
-  body.innerHTML = `<div class="ph"><span class="ic" style="--c:${m.heist ? "#ff2d55" : "#8e8e93"}">${icon("mission")}</span><div><h2>${esc(missionName(m))}</h2><p>${esc(chapterName(m))} · Mission ${m.n}</p>${m.heist ? `<span class="badge heist">Heist</span>` : ""}</div></div>
+  body.innerHTML = `<div class="ph"><span class="ic" style="--c:${m.heist ? "#ff3d8b" : "#8e8e93"}">${icon("mission")}</span><div><h2>${esc(missionName(m))}</h2><p>${esc(chapterName(m))} · Mission ${m.n}</p>${m.heist ? `<span class="badge heist">Heist</span>` : ""}</div></div>
     <p class="note">Played as ${esc(who(m))}.${st.spoilers ? "" : " The name is hidden; turn on spoilers in Settings to see it."}</p>
     <div class="actions"><button class="act wide${st.done[m.id] ? " on" : ""}" id="done">${icon("check")}${st.done[m.id] ? "Done" : "Mark done"}</button></div>
     ${at ? `<p class="sec">Starts at</p><div class="group">${placeRow(at)}</div>` : ""}`
@@ -551,6 +633,8 @@ function drawSettings() {
   const ct = data.collectibles.reduce((a, c) => a + c.total, 0), cf = data.collectibles.reduce((a, c) => a + Math.min(c.total, st.found[c.id] || 0), 0)
   const stat = (n, of, label) => `<div class="stat"><b>${n}<small> / ${of}</small></b><span>${label}</span><div class="bar"><i style="width:${n / of * 100}%"></i></div></div>`
   $("#settingsBody").innerHTML = `<h1>Settings</h1>
+    <p class="sec">Account</p>
+    <div class="group" id="acct">${acctHTML()}</div>
     <p class="sec">Progress</p>
     <div class="stats">${stat(pv, pinned.filter(p => p.cat !== "people").length, "Places visited")}${stat(md, data.missions.length, "Missions done")}${stat(cf, ct, "Collectibles")}</div>
     <p class="sec">Appearance</p>
@@ -564,7 +648,7 @@ function drawSettings() {
     <div class="group">${toggleRow("spoilers", "Show mission and chapter names", "Off until you've played them")}</div>
     <p class="sec">Data</p>
     <div class="group"><button class="row link" id="export"><span class="t"><b>Export progress</b></span></button><button class="row danger" id="reset"><span class="t"><b>Reset progress</b></span></button></div>
-    <p class="foot">Progress stays on this device. Nothing is sent anywhere.</p>
+    <p class="foot">${acct.user ? "Progress syncs to your account at api.jaybulb.com. Nothing else is collected." : "Progress stays on this device unless you sign in. Nothing else is collected."}</p>
     <p class="sec">About</p>
     <div class="group">
       <div class="row"><span class="t"><b>Version</b></span><span class="val">${VERSION}</span></div>
@@ -575,8 +659,9 @@ function drawSettings() {
     </div>
     <p class="foot">${esc(data.disclaimer)} Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps.</p>`
   const b = $("#settingsBody")
-  b.querySelectorAll("[data-theme]").forEach(x => x.onclick = () => { st.theme = x.dataset.theme; save(); applyTheme(); drawSettings() })
-  b.querySelectorAll("[data-key]").forEach(x => x.onchange = () => { st[x.dataset.key] = x.checked; save(); applySettings() })
+  wireAcct(b)
+  b.querySelectorAll("[data-theme]").forEach(x => x.onclick = () => { st.theme = x.dataset.theme; save(false); applyTheme(); drawSettings() })
+  b.querySelectorAll("[data-key]").forEach(x => x.onchange = () => { st[x.dataset.key] = x.checked; save(false); applySettings() })
   b.querySelectorAll("[data-cat]").forEach(x => x.onchange = () => { st.hidden = x.checked ? st.hidden.filter(c => c !== x.dataset.cat) : [...st.hidden, x.dataset.cat]; save(); queue() })
   $("#export").onclick = () => {
     const blob = new Blob([JSON.stringify({ app: "flamingo", exported: new Date().toISOString(), visited: st.visited, done: st.done, found: st.found }, null, 2)], { type: "application/json" })

@@ -3,16 +3,17 @@
 The live kit is at flamingo.jaybulb.com/brand/. This file keeps the rules.
 
 ## Logo
-- The icon is a white map pin on a pink tile. It holds a sunset: sun yellow to pink, with three white stripes under the horizon. No text, no game art, never "GTA".
+- The icon is a white map pin over a striped Leonida sunset: an orange-to-hot-pink sky, a yellow sun cut by three stripes, and teal water. No text, no game art, never "GTA".
 - `mark.svg` is the one-colour mark (`currentColor`): pink on white, white on black, or white on pink.
 - Wordmark: the mark, then "Flamingo" in Flamingo Sans Bold, tracking −3.5%.
 - Clear space is the width of the pin's head. Smallest size is 16 px.
 
 ## Colour
-- Flamingo pink `#ff2d55` (dark `#ff375f`) is the only accent. Use `#d70f3c` / `#ff6482` for small pink text.
-- Sunset gradient: `#ffcc00 → #ff9500 → #ff2d55`. It appears in the icon only.
+- Vice pink `#ff3d8b` (dark `#ff5fa2`) is the only accent. Use `#d0186b` / `#ff7ab5` for small pink text.
+- Leonida sunset, after GTA VI's key art: sky `#ff8a3d → #ff3d8b → #e81e74`, sun `#ffe07a → #ff8a3d`, sea teal `#14b8c4 → #0e8fa6`. Used in the icon and the landing glow, never behind text.
+- No violet: GTA VI's purple stays out (house rule).
 - Neutrals are white and cool greys (Apple system). Never beige, sand or warm paper, and never purple.
-- Map: water `#cfe2f0`, land `#f7f8f9`, forest `#d4ebcb`, wetland `#d2ece6`, farmland `#e4f0d2`, city `#e8ebef` (see `tokens.css` for dark).
+- Map: water `#c2e7ee`, land `#f7f8f9`, forest `#d4ebcb`, wetland `#d2ece6`, farmland `#e4f0d2`, city `#e8ebef` (see `tokens.css` for dark).
 - Categories and regions use Apple system colours, one per thing, defined in `scripts/build-data.mjs`.
 
 ## Type

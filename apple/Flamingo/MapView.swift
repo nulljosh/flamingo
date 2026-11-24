@@ -93,7 +93,7 @@ struct MapScreen: View {
             .onChange(of: geo.size) { setSize($0, first: false) }
         }
         .ignoresSafeArea(edges: .bottom)
-        .background(Color(hex: "#cfe2f0").opacity(0.0001))
+        .background(Color(hex: "#c2e7ee").opacity(0.0001))
     }
 
     private func setSize(_ s: CGSize, first: Bool) {
@@ -216,7 +216,7 @@ struct MapLayer: View, Animatable {
             }
         }
         .frame(width: size.width, height: size.height)
-        .background(c("#cfe2f0", "#0b1722"))
+        .background(c("#c2e7ee", "#07202a"))
     }
 
     func pt(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: cam.x + x * cam.s, y: cam.y + y * cam.s) }
@@ -228,7 +228,7 @@ struct MapLayer: View, Animatable {
         var all = Self.land
         for i in Self.islands { all.addPath(i) }
         for k in Self.keys { all.addPath(k) }
-        ctx.stroke(all, with: .color(c("#e4eef6", "#0f1e2b")), lineWidth: 10 * lw)
+        ctx.stroke(all, with: .color(c("#dff3f6", "#0b2a35")), lineWidth: 10 * lw)
         ctx.fill(all, with: .color(c("#f7f8f9", "#1d2024")))
         ctx.drawLayer { l in
             l.clip(to: all)
@@ -248,10 +248,10 @@ struct MapLayer: View, Animatable {
                 clipped.stroke(grid, with: .color(c("#ffffff", "#3a4047")), lineWidth: lw)
             }
         }
-        ctx.stroke(Self.land, with: .color(c("#b9cad6", "#2c3640")), lineWidth: 1.4 * lw)
+        ctx.stroke(Self.land, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: 1.4 * lw)
         for l in D.data.map.lakes {
             let e = Path(ellipseIn: CGRect(x: l.cx - l.rx, y: l.cy - l.ry, width: l.rx * 2, height: l.ry * 2))
-            ctx.fill(e, with: .color(c("#cfe2f0", "#0b1722"))); ctx.stroke(e, with: .color(c("#b9cad6", "#2c3640")), lineWidth: lw)
+            ctx.fill(e, with: .color(c("#c2e7ee", "#07202a"))); ctx.stroke(e, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: lw)
         }
         for r in Self.roads { ctx.stroke(r, with: .color(c("#dde3e8", "#2a2f35")), style: StrokeStyle(lineWidth: 5 * lw, lineCap: .round)) }
         for r in Self.roads { ctx.stroke(r, with: .color(c("#ffffff", "#3a4047")), style: StrokeStyle(lineWidth: 3 * lw, lineCap: .round)) }

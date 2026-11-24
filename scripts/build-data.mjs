@@ -44,7 +44,7 @@ const regions = [
     blurb: "Sawgrass, mangroves and gator country in the south-west. Airboats, mud bogs and small Gulf towns.",
     inspiration: "The Everglades",
     poly: [[0,620],[360,620],[620,660],[700,760],[690,1000],[0,1000]] },
-  { id: "vice-city", name: "Vice City", short: "Vice City", color: "#ff2d55", label: [770, 740],
+  { id: "vice-city", name: "Vice City", short: "Vice City", color: "#ff3d8b", label: [770, 740],
     blurb: "Leonida's big city on the east coast: downtown towers, the port, and the beaches across the bay.",
     inspiration: "Miami and Miami Beach",
     poly: [[620,660],[780,700],[1000,680],[1000,1000],[690,1000],[700,760]] },
@@ -59,7 +59,7 @@ const categories = [
   { id: "landmark", name: "Landmarks", one: "Landmark", color: "#ff9500", symbol: "star.fill" },
   { id: "safehouse", name: "Safehouses & garages", one: "Safehouse", color: "#34c759", symbol: "house.fill" },
   { id: "store", name: "Shops", one: "Shop", color: "#007aff", symbol: "bag.fill" },
-  { id: "business", name: "Clubs & businesses", one: "Business", color: "#ff2d55", symbol: "music.note" },
+  { id: "business", name: "Clubs & businesses", one: "Business", color: "#ff3d8b", symbol: "music.note" },
   { id: "activity", name: "Activities", one: "Activity", color: "#30b0c7", symbol: "figure.run" },
   { id: "race", name: "Race tracks", one: "Race track", color: "#ff3b30", symbol: "flag.checkered" },
   { id: "weapons", name: "Ammu-Nation & ranges", one: "Weapons", color: "#636366", symbol: "scope" },
@@ -69,7 +69,7 @@ const categories = [
   { id: "waink", name: "WAiNK scans", one: "WAiNK scan", color: "#a2845e", symbol: "camera.viewfinder" },
   { id: "meditation", name: "Meditation spots", one: "Meditation spot", color: "#00c7be", symbol: "figure.mind.and.body" },
   { id: "people", name: "Characters", one: "Character", color: "#0a84ff", symbol: "person.fill" },
-  { id: "mission", name: "Story missions", one: "Mission", color: "#ff2d55", symbol: "flag.fill" },
+  { id: "mission", name: "Story missions", one: "Mission", color: "#ff3d8b", symbol: "flag.fill" },
   { id: "collectible", name: "Collectibles", one: "Collectible", color: "#ff9500", symbol: "sparkles" },
 ]
 

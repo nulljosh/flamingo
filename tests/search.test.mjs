@@ -48,3 +48,16 @@ test("save percent maps onto the story", () => {
   assert.equal(e.next.id, data.missions[46].id)
   assert.equal(estimate(75, data.missions).finished, true)
 })
+
+import { union, reconcile, toRow } from "../web/app/sync.js"
+test("sync: first link unions, then the newer side wins", () => {
+  const local = { visited: { a: 5 }, done: { m1: 9 }, found: { f: 3 }, savePct: "", linked: false }
+  const remote = { visited: { a: 2, b: 7 }, done: {}, found: { f: 1, g: 4 }, save_pct: "40" }
+  const r = reconcile(local, remote)
+  assert.equal(r.take, "union"); assert.deepEqual(r.progress.visited, { a: 2, b: 7 }); assert.deepEqual(r.progress.found, { f: 3, g: 4 }); assert.equal(r.progress.savePct, "40"); assert.equal(r.push, true)
+  assert.equal(reconcile({ ...local, linked: true, dirty: true }, remote).take, "local")
+  assert.equal(reconcile({ ...local, linked: true, dirty: false }, remote).take, "remote")
+  assert.equal(reconcile(local, null).take, "local")
+  assert.deepEqual(toRow("u", r.progress), { id: "u", visited: { a: 2, b: 7 }, done: { m1: 9 }, found: { f: 3, g: 4 }, save_pct: "40" })
+  assert.deepEqual(union({}, {}).visited, {})
+})

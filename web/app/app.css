@@ -1,9 +1,9 @@
 /* Flamingo, the map app. Apple-style: SF type, an 8 point grid, one set of radii, Liquid Glass chrome over a full-bleed map.
    White and cool greys in light, near-black in dark, flamingo pink as the one accent. No beige, no purple. */
 :root {
-  --pink: #ff2d55; --pink-ink: #d70f3c;
+  --pink: #ff3d8b; --pink-ink: #d0186b;
   --bg: #f2f2f7; --card: #ffffff; --text: #1d1d1f; --text2: #6e6e73; --text3: #aeaeb2; --sep: rgba(60, 60, 67, .14); --fill: rgba(120, 120, 128, .12);
-  --water: #cfe2f0; --water2: #e4eef6; --land: #f7f8f9; --coast: #b9cad6; --road: #ffffff; --road-edge: #dde3e8; --urban: #e9ecef; --label: #3a3a3c; --label-halo: rgba(255, 255, 255, .9);
+  --water: #c2e7ee; --water2: #dff3f6; --land: #f7f8f9; --coast: #a9cfd8; --road: #ffffff; --road-edge: #dde3e8; --urban: #e9ecef; --label: #3a3a3c; --label-halo: rgba(255, 255, 255, .9);
   --tint: .16; --forest: #d4ebcb; --wetland: #d2ece6; --farm: #e4f0d2; --city: #e8ebef; --sand: #ffffff;
   --glass: rgba(255, 255, 255, .62); --glass-strong: rgba(255, 255, 255, .8); --glass-edge: rgba(255, 255, 255, .75); --glass-line: rgba(0, 0, 0, .06);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .08);
@@ -13,9 +13,9 @@
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --pink: #ff375f; --pink-ink: #ff6482;
+  --pink: #ff5fa2; --pink-ink: #ff7ab5;
   --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --text2: #a1a1a6; --text3: #636366; --sep: rgba(84, 84, 88, .45); --fill: rgba(120, 120, 128, .24);
-  --water: #0b1722; --water2: #0f1e2b; --land: #1d2024; --coast: #2c3640; --road: #3a4047; --road-edge: #2a2f35; --urban: #26292e; --label: #d1d1d6; --label-halo: rgba(0, 0, 0, .75);
+  --water: #07202a; --water2: #0b2a35; --land: #1d2024; --coast: #2c3640; --road: #3a4047; --road-edge: #2a2f35; --urban: #26292e; --label: #d1d1d6; --label-halo: rgba(0, 0, 0, .75);
   --tint: .2; --forest: #1c3021; --wetland: #18302d; --farm: #252d20; --city: #26292e; --sand: #2a2d31;
   --glass: rgba(36, 36, 40, .56); --glass-strong: rgba(44, 44, 48, .82); --glass-edge: rgba(255, 255, 255, .14); --glass-line: rgba(255, 255, 255, .06);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
@@ -266,3 +266,13 @@ body.on-settings #settings, body.on-story #story { opacity: 1; pointer-events: a
 .act.showmap { width: 100%; margin: 4px 0 4px; height: 48px; }
 .sheet.full.peek { height: calc(40% + 0px); }
 @media (min-width: 900px) { .act.showmap { display: none; } .sheet.full.peek { height: calc(100% - 120px); } }
+
+/* ---------- account ---------- */
+.acct-form { display: grid; gap: 8px; padding: 16px; }
+.acct-form input { height: 48px; padding: 0 14px; border-radius: 12px; background: var(--fill); font-size: 17px; outline: none; color: var(--text); }
+.acct-form input:focus { box-shadow: 0 0 0 2px var(--pink); }
+.acct-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.acct-btns .act { height: 48px; } .acct-btns .act:disabled { opacity: .5; }
+.acct-link { justify-self: start; color: var(--pink-ink); font-size: 15px; padding: 6px 2px; }
+.acct-msg { padding: 0 16px 14px; font-size: 14px; color: var(--text2); }
+.acct-form .acct-msg { padding: 4px 2px 0; }

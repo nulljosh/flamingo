@@ -9,7 +9,7 @@ const b = await chromium.launch({ channel: "chrome", headless: true })
 for (const [n, file] of [[180, "apple-touch-icon.png"], [512, "icon-512.png"], [32, "favicon-32.png"], [1024, "../apple/Flamingo/Assets.xcassets/AppIcon.appiconset/icon-1024.png"]]) {
   const p = await b.newPage({ viewport: { width: n, height: n } })
   // touch icons are square; iOS rounds them
-  await p.setContent(`<style>html,body{margin:0;background:#ff2d55}</style><img src="${base}/icon.svg" style="width:${n}px;height:${n}px;display:block;${n >= 180 ? "clip-path:inset(0)" : ""}">`)
+  await p.setContent(`<style>html,body{margin:0;background:#ff3d8b}</style><img src="${base}/icon.svg" style="width:${n}px;height:${n}px;display:block;${n >= 180 ? "clip-path:inset(0)" : ""}">`)
   await p.waitForTimeout(300); await p.screenshot({ path: `web/${file}`, omitBackground: n < 180 }); await p.close()
 }
 // OG card: the app at a wide size, the title over it

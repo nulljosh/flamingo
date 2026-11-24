@@ -42,7 +42,7 @@ struct RootView: View {
             if tab == .settings { SettingsView().transition(.opacity) }
             dock.padding(.bottom, 8)
         }
-        .background(Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.043, green: 0.09, blue: 0.133, alpha: 1) : UIColor(red: 0.81, green: 0.886, blue: 0.94, alpha: 1) }).ignoresSafeArea())
+        .background(Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.027, green: 0.125, blue: 0.165, alpha: 1) : UIColor(red: 0.761, green: 0.906, blue: 0.933, alpha: 1) }).ignoresSafeArea())
         .animation(.easeInOut(duration: 0.22), value: tab)
         .onAppear(perform: qa)
     }

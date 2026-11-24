@@ -87,5 +87,5 @@ extension Color {
         Scanner(string: hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))).scanHexInt64(&v)
         self.init(.sRGB, red: Double((v >> 16) & 0xff) / 255, green: Double((v >> 8) & 0xff) / 255, blue: Double(v & 0xff) / 255)
     }
-    static let pink = Color(hex: "#ff2d55")
+    static let pink = Color(hex: "#ff3d8b")
 }

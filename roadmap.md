@@ -27,3 +27,9 @@ Compared against App Store screens of MapGenie (Crimson Desert, Elden Ring), Int
 Skipped on purpose: photos and quest walkthroughs (no rights to the art, no verified step data), satellite tiles (Rockstar's imagery), accounts, social and paywalls.
 
 Also fixed in 1.3.0: hidden pins were still drawn on the web, because `.pin { display: grid }` overrode the `hidden` attribute. QA now checks what is drawn, not the attribute.
+
+## 1.4.0 (2026-11-24)
+- Accounts on the web: email sign-up, sign in, reset, sign out and delete, from Settings. Progress (visited, missions, collectibles, save %) syncs through api.jaybulb.com's `flamingo_progress` table, which is owner-only. The first link merges, and after that the newer side wins (`web/app/sync.js`, tested). Checked end to end against a local API by `tests/account.mjs`.
+- GTA VI colours: Vice pink `#ff3d8b`, sunset `#ff8a3d → #ff3d8b`, sea teal `#14b8c4`, and teal-tinted water. No violet.
+- New icon: a white pin over a striped sunset and teal water.
+- Next: accounts in the iOS app (same table, URLSession), then G3 to G6.
