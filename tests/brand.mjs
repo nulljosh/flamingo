@@ -1,7 +1,7 @@
 // Brand kit QA: full-page screenshots light and dark, every image and the mark load.
 import { createRequire } from "node:module"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Josh/Code/epiphany/package.json`)
+const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
 const { chromium } = require("playwright")
 const base = process.argv[2] || "http://localhost:8790"
 const b = await chromium.launch({ channel: "chrome", headless: true })

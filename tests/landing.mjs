@@ -1,7 +1,7 @@
 // Landing QA: screenshots at phone and desktop sizes, light and dark, and checks that every image loads.
 import { createRequire } from "node:module"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Josh/Code/epiphany/package.json`)
+const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
 const { chromium, devices } = require("playwright")
 const base = process.argv[2] || "http://localhost:8790", out = "docs/img/qa"
 const b = await chromium.launch({ channel: "chrome", headless: true })

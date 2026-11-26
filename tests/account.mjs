@@ -3,7 +3,7 @@
 // node tests/account.mjs [web=http://localhost:8790] [api=http://localhost:8787]
 import { createRequire } from "node:module"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Josh/Code/epiphany/package.json`)
+const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
 const { chromium, devices } = require("playwright")
 const web = process.argv[2] || "http://localhost:8790", api = process.argv[3] || "http://localhost:8787"
 let fails = 0

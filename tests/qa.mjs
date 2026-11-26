@@ -4,7 +4,7 @@
 import { createRequire } from "node:module"
 import { mkdirSync } from "node:fs"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Josh/Code/epiphany/package.json`)
+const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
 const { chromium, devices } = require("playwright")
 
 const base = process.argv[2] || "http://localhost:8790", out = process.argv[3] || "docs/img/qa"

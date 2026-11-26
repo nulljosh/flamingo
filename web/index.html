@@ -37,8 +37,7 @@
   /* the app, shown rather than described: real QA screenshots in phone frames */
   .phones { display: flex; justify-content: center; align-items: flex-end; gap: clamp(12px, 3vw, 36px); max-width: 1040px; margin: 0 auto; padding-top: 2rem; }
   .phone { flex: 0 1 300px; border-radius: 46px; padding: 9px; background: #1d1d1f; box-shadow: 0 30px 70px rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .06); }
-  .phone img { display: block; width: 100%; height: auto; border-radius: 37px; aspect-ratio: 390 / 844; object-fit: cover; object-position: top; background: var(--bg2); }
-  #native .phone img { border-radius: 40px; }
+  .phone img { display: block; width: 100%; height: auto; border-radius: 37px; background: var(--bg2); }
   .phone:nth-child(2) { flex-basis: 330px; transform: translateY(-28px); }
   @media (prefers-color-scheme: dark) { .phone { background: #2c2c2e; box-shadow: 0 30px 70px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08); } }
   .cap { text-align: center; margin-top: 2.5rem; font-size: .875rem; color: var(--text2); }
@@ -105,9 +104,9 @@
 
 <section id="app" class="lp-reveal">
   <div class="phones">
-    <div class="phone"><picture><source srcset="img/phone-search-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-search-light.png" alt="Search for garage: Shore Court Garage and Paradise Garage, each with its region" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/phone-vicecity-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-vicecity-light.png" alt="The map zoomed into Vice City, pins and names for Ocean Beach, Little Cuba and downtown" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/phone-place-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-place-light.png" alt="A place card for Shore Court Garage, marked visited" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-search-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-search-light.png" alt="Search for garage: Shore Court Garage and Paradise Garage, each with its region" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-vicecity-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-vicecity-light.png" alt="The map zoomed into Vice City, pins and names for Ocean Beach, Little Cuba and downtown" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-place-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-place-light.png" alt="A place card for Shore Court Garage, marked visited" loading="lazy"></picture></div>
   </div>
   <p class="cap">Screenshots from the QA run, not mock-ups.</p>
   <ul class="says">
@@ -135,9 +134,9 @@
   <h2 class="h2">Know where you are in the story.</h2>
   <p class="sub">Type the % from your save and Flamingo guesses your next mission. Then tick missions off as you play.</p>
   <div class="phones">
-    <div class="phone"><picture><source srcset="img/phone-story-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-story-light.png" alt="Story tab: 30% on the save guesses 46 of 91 missions, Chapter 3 mission 14" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/phone-checklist-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-checklist-light.png" alt="The mission checklist, the next mission highlighted in pink" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/ios-story-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-story-light.png" alt="The same Story tab in the iPhone app" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-story-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-story-light.png" alt="Story tab: 30% on the save guesses 46 of 91 missions, Chapter 3 mission 14" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-checklist-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-checklist-light.png" alt="The mission checklist, the next mission highlighted in pink" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-story-dark.png" media="(prefers-color-scheme: dark)"><img width="1179" height="2556" src="img/ios-story-light.png" alt="The same Story tab in the iPhone app" loading="lazy"></picture></div>
   </div>
   <ul class="says">
     <li><b>Save % in, next mission out.</b> One tap ticks off everything before it.</li>
@@ -150,17 +149,17 @@
   <h2 class="h2">Native on iPhone and iPad.</h2>
   <p class="sub">Built in SwiftUI from the same data file, with Liquid Glass on iOS 26.</p>
   <div class="phones">
-    <div class="phone"><picture><source srcset="img/ios-map-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-map-light.png" alt="The iPhone app: Leonida with a card for each region, and the glass tab bar" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/ios-place-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-place-light.png" alt="The iPhone app: Shore Court Garage selected on the map, its card in a sheet" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/ios-settings-dark.png" media="(prefers-color-scheme: dark)"><img src="img/ios-settings-light.png" alt="The iPhone app: settings with progress, appearance and map options" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-map-dark.png" media="(prefers-color-scheme: dark)"><img width="1179" height="2556" src="img/ios-map-light.png" alt="The iPhone app: Leonida with a card for each region, and the glass tab bar" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-place-dark.png" media="(prefers-color-scheme: dark)"><img width="1179" height="2556" src="img/ios-place-light.png" alt="The iPhone app: Shore Court Garage selected on the map, its card in a sheet" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/ios-settings-dark.png" media="(prefers-color-scheme: dark)"><img width="1179" height="2556" src="img/ios-settings-light.png" alt="The iPhone app: settings with progress, appearance and map options" loading="lazy"></picture></div>
   </div>
   <p class="cap">From the iOS simulator, iPhone 15 Pro.</p>
 </section>
 
 <section id="settings" class="lp-reveal">
   <div class="phones">
-    <div class="phone"><picture><source srcset="img/phone-browse-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-browse-light.png" alt="Browse: categories as round icons, then the six regions" loading="lazy"></picture></div>
-    <div class="phone"><picture><source srcset="img/phone-settings-dark.png" media="(prefers-color-scheme: dark)"><img src="img/phone-settings-light.png" alt="Settings: progress, appearance and map options" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-browse-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-browse-light.png" alt="Browse: categories as round icons, then the six regions" loading="lazy"></picture></div>
+    <div class="phone"><picture><source srcset="img/phone-settings-dark.png" media="(prefers-color-scheme: dark)"><img width="1170" height="1992" src="img/phone-settings-light.png" alt="Settings: progress, appearance and map options" loading="lazy"></picture></div>
   </div>
   <ul class="says">
     <li><b>Make it yours.</b> Long-press to drop your own pin with a note. Star places to save them.</li>
