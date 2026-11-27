@@ -27,6 +27,7 @@ for t in light dark; do
   shot settings $t $T -qaVisited -qaTab settings
   shot story $t $T -qaVisited -qaPct 30 -qaTab story
   shot layers $t $T -qaVisited -qaRoute layers
+  shot route $t $T -qaRoute trip/port-gellhorn
   shot mypin $t $T -qaPin -qaZoom 640,540,3 -qaRoute pin/uqa
   [ -n "$QA_EMAIL" ] && shot account $t $T -qaVisited -qaTab settings -qaAPI http://localhost:8787 -qaLogin "$QA_EMAIL" "$QA_PASS"
 done

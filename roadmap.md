@@ -53,6 +53,9 @@ Also fixed in 1.3.0: hidden pins were still drawn on the web, because `.pin { di
 - 3.1: 21 more pins matched to GTADB positions (neighbourhoods such as Downtown, Southside and Washington Beach by the middle of their landmarks; Brian's marina, the state prison, Allied Crystal, NINE1NINE and others by name). 62 of 94 pins are now sourced positions; 32 are still estimated. A data test checks unique ids and that every pin is on land and inside its region.
 - 3.2: real streets. 1,585 street lines traced from the GTADB tiles replace the drawn street grids; they fade in once you zoom past the overview, on web and iOS.
 
+## 4.0.0 (2026-11-27): plan your run
+- "Plan a route" on every region card: the shortest open path through the unvisited places you can see (nearest neighbour from every start, then 2-opt; `web/app/route.js`, tested, with a Swift twin in `Route.swift`). Numbered pins joined by a dotted line, the stops listed in order, and the length in km from the map scale (`metresPerUnit`, about 14.7 m per map unit).
+
 ## Road to 100
 How versions work here: a major is a theme that ships on web and iOS together, a minor is one row below, a patch is a fix. A version number is only spent on something a player can see, with tests and QA screenshots in light and dark, then commit, tag, push and deploy. Numbers are given out when a version ships: if a theme is blocked (on the game, Apple or Joshua), the next unblocked theme takes its number and the blocked one moves down.
 
@@ -64,10 +67,11 @@ How versions work here: a major is a theme that ships on web and iOS together, a
 - 3.4 A data check in CI: unique ids, every pin inside its region, every pin sourced.
 
 ### v4 Plan your run
-- 4.0 Routes: the shortest loop through what is left in a region (nearest neighbour plus 2-opt, on device).
-- 4.1 Where am I: tap your spot, get the nearest unfinished things.
-- 4.2 A 100% tracker with every category the game counts.
-- 4.3 Share a route or a set of pins as a link that opens in the app.
+- 4.0 Routes: the shortest run through what is left in a region (done).
+- 4.1 Robberies (Joshua's favourite): all 28 smash-and-grab shops as pins (jewellers and pawn shops: All That Glitters, Ernesto's Pawn, Joyeria Empeños, Ayoka Jewelers, Rococo Rich, Legendary Custom Jewelry, Avery Pawn, Victoria Lee Jeweler, Casa de Empeño, Timeless Peculiars, Hamlet Pawn, The Siren's Chest and the rest), a Robberies layer, "Hit" ticks with a 28-shop tracker, and sourced tips for smash-and-grabs.
+- 4.2 Where am I: tap your spot, get the nearest unfinished things.
+- 4.3 A 100% tracker with every category the game counts.
+- 4.4 Share a route or a set of pins as a link that opens in the app.
 
 ### v5 Apple everywhere (needs Xcode 16+ and Joshua's App Store login)
 - 5.0 TestFlight, then the App Store.

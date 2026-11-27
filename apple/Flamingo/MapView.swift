@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum Route: Hashable, Identifiable {
-    case search, layers, pin(String), place(String), region(String), mission(String), collectible(String), list(String)
+    case search, layers, pin(String), place(String), region(String), mission(String), collectible(String), list(String), trip(String)
     var id: String { "\(self)" }
 }
 
@@ -16,6 +16,7 @@ final class MapModel: ObservableObject {
     @Published var route: Route?
     @Published var hits: [String]?      // search matches, drawn as lettered pins while search is open
     @Published var peek = false         // search sheet folded down to show the matches
+    @Published var trip: [String]?      // a planned route: stops in order, drawn as numbered pins joined by a line
     var size: CGSize = .zero
     var fitS: CGFloat = 1
     var sheetInset: CGFloat = 0
@@ -80,7 +81,7 @@ struct MapScreen: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                MapLayer(cam: model.cam, size: geo.size, selected: model.selected, filter: model.filter, hits: model.route == .search ? model.hits : nil, st: store.s, fitS: model.fitS,
+                MapLayer(cam: model.cam, size: geo.size, selected: model.selected, filter: model.filter, hits: model.route == .search ? model.hits : model.trip, numbered: model.route != .search && model.trip != nil, st: store.s, fitS: model.fitS,
                          tapPlace: { model.open(.place($0)) }, tapGroup: { model.zoomTo($0) }, tapPin: { model.open(.pin($0)) })
                     .gesture(pan.simultaneously(with: pinch))
                     .simultaneousGesture(dropPin)
@@ -155,6 +156,7 @@ struct MapLayer: View, Animatable {
     let selected: String?
     let filter: String?
     let hits: [String]?
+    var numbered = false               // hits are route stops: number them and join them
     let st: Store.State
     let fitS: CGFloat
     let tapPlace: (String) -> Void
@@ -224,7 +226,7 @@ struct MapLayer: View, Animatable {
             }
             ForEach(groups, id: \.key) { g in
                 if g.items.count == 1, let p = g.items.first {
-                    PinView(place: p, selected: p.id == selected, visited: st.visited[p.id] != nil, letter: hits?.firstIndex(of: p.id).map { String(UnicodeScalar(65 + $0)!) })
+                    PinView(place: p, selected: p.id == selected, visited: st.visited[p.id] != nil, letter: hits?.firstIndex(of: p.id).map { numbered ? String($0 + 1) : String(UnicodeScalar(65 + $0)!) })
                         .position(g.at)
                         .onTapGesture { tapPlace(p.id) }
                         .accessibilityAddTraits(.isButton)
@@ -268,6 +270,10 @@ struct MapLayer: View, Animatable {
         ctx.stroke(Self.land, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: 1.4 * lw)
         for e in Self.lakes {
             ctx.fill(e, with: .color(c("#c2e7ee", "#07202a"))); ctx.stroke(e, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: lw)
+        }
+        if numbered, let h = hits, h.count > 1 {
+            let line = Path { p in p.addLines(h.compactMap { D.places[$0]?.point }) }
+            ctx.stroke(line, with: .color(.pink), style: StrokeStyle(lineWidth: 3 * lw, lineCap: .round, lineJoin: .round, dash: [1 * lw, 7 * lw]))
         }
         for r in Self.roads { ctx.stroke(r, with: .color(c("#dde3e8", "#2a2f35")), style: StrokeStyle(lineWidth: 5 * lw, lineCap: .round)) }
         for r in Self.roads { ctx.stroke(r, with: .color(c("#ffffff", "#3a4047")), style: StrokeStyle(lineWidth: 3 * lw, lineCap: .round)) }

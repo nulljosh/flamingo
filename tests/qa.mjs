@@ -42,6 +42,16 @@ for (const theme of ["light", "dark"]) {
   check((await page.locator(".plabel:not([hidden])").count()) > 3, `${theme}: labels show when zoomed in`)
   await shot(page, `phone-vicecity-${theme}`)
 
+  // plan a route through a region: numbered stops joined by a line, and the sheet lists them in order
+  await page.evaluate(() => { location.hash = "region/port-gellhorn" }); await page.waitForTimeout(800)
+  await page.click("#plan"); await page.waitForTimeout(1000)
+  check((await page.locator(".pin.lettered:not([hidden])").count()) >= 3, `${theme}: a route numbers its stops`)
+  check(((await page.getAttribute("#route", "d")) || "").length > 10, `${theme}: a route draws its line`)
+  check(/stops · about [\d.]+ km/.test(await page.locator(".ph p").first().innerText()), `${theme}: a route says how far it is`)
+  await shot(page, `phone-route-${theme}`)
+  await page.click("#sClose"); await page.waitForTimeout(400)
+  check(((await page.getAttribute("#route", "d")) || "") === "", `${theme}: closing the route clears the line`)
+
   // layers: hide a category and its pins go; show all brings them back
   await page.click("#layers"); await page.waitForTimeout(500)
   check((await page.locator("[data-layer]").count()) >= 10, `${theme}: layers lists the categories`)

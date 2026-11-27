@@ -21,6 +21,7 @@ struct SheetRoot: View {
         case .mission(let id): MissionScreen(mission: D.missions[id]!)
         case .collectible(let id): CollectibleScreen(item: D.collectibles[id]!)
         case .list(let id): ListScreen(cat: D.cats[id]!)
+        case .trip(let id): TripScreen(region: D.regions[id]!)
         }
     }
 }
@@ -312,6 +313,9 @@ struct RegionScreen: View {
                     Text("\(seen) of \(items.count) visited").font(.footnote).foregroundStyle(.secondary)
                 }
                 .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+            }
+            if Trip.stops(region.id, store.s).count > 1 {
+                Section { NavigationLink(value: Route.trip(region.id)) { Label("Plan a route", systemImage: "point.topleft.down.to.point.bottomright.curvepath").foregroundStyle(Color.pink) } }
             }
             Section("Places") { ForEach(items) { PlaceRow(p: $0) } }
         }

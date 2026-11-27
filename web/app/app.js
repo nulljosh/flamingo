@@ -4,6 +4,7 @@ import { search, norm } from "./search.js"
 import { estimate, missionsDone, STORY_SHARE } from "./story.js"
 import { createClient } from "./spark.js"
 import { reconcile, toRow } from "./sync.js"
+import { tour, pathLength } from "./route.js"
 
 const $ = s => document.querySelector(s)
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
@@ -20,8 +21,9 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
-const VERSION = "3.2.0"
+const VERSION = "4.0.0"
 let hits = null   // place ids matching the search, shown as lettered pins while the search is open
+let trip = null   // a planned run: { region, ids } in order, shown as numbered pins joined by a line
 const KEY = "flamingo.v1"
 const DEF = { fav: {}, pins: [], recentQ: [], recentP: [], hinted: false, savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
 const st = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") } } catch { return { ...DEF } } })()
@@ -154,6 +156,7 @@ function drawWorld() {
   // real streets, traced from the GTADB tiles; they fade in once you zoom past the overview
   el("path", { class: "street", d: m.streets.map(l => "M" + l.join("L")).join(""), "clip-path": "url(#landclip)" }, w)
   m.lakes.forEach(l => el("path", { class: "lake", d: smooth(l.pts) }, w))
+  el("path", { id: "route", class: "route", d: "" }, w)
   const roads = el("g", {}, w)
   m.roads.forEach(r => el("path", { class: "road-edge", d: smooth(r.pts, false) }, roads))
   m.roads.forEach(r => el("path", { class: "road", d: smooth(r.pts, false) }, roads))
@@ -326,6 +329,7 @@ const prio = p => PRIORITY.indexOf(p.cat)
 function visible(p) {
   if (p.id === selected) return true
   if (hits) return hits.includes(p.id)
+  if (trip) return trip.ids.includes(p.id)
   if (filter) return p.cat === filter
   if (st.hidden.includes(p.cat)) return false
   if (st.hideVisited && st.visited[p.id]) return false
@@ -353,7 +357,7 @@ function render() {
   world.setAttribute("transform", `translate(${view.x},${view.y}) scale(${view.s})`)
   const z = view.s / fitS
   // zoomed out: one card per region instead of a cloud of pins
-  const overview = z < OVERVIEW && !filter && !selected && !hits
+  const overview = z < OVERVIEW && !filter && !selected && !hits && !trip
   mapEl.classList.toggle("streets-on", z > 1.8)
   for (const { r, d, c } of rlabels) {
     const t = `translate(${view.x + r.label[0] * view.s}px, ${view.y + r.label[1] * view.s}px) translate(-50%, -50%)`
@@ -366,7 +370,7 @@ function render() {
   const groups = []
   for (const p of list) {
     const [x, y] = pos(p)
-    const g = st.cluster && !hits && p.id !== selected && groups.find(g => !g.sel && Math.abs(g.x - x) < 30 && Math.abs(g.y - y) < 30)
+    const g = st.cluster && !hits && !trip && p.id !== selected && groups.find(g => !g.sel && Math.abs(g.x - x) < 30 && Math.abs(g.y - y) < 30)
     if (g) g.items.push(p); else groups.push({ x, y, items: [p], sel: p.id === selected })
   }
   const shown = new Set(), labels = [], boxesPins = []
@@ -376,7 +380,7 @@ function render() {
       const p = g.items[0], b = pinEl(p); shown.add(p.id)
       b.style.transform = `translate3d(${g.x}px, ${g.y}px, 0)`
       b.classList.toggle("sel", p.id === selected); b.classList.toggle("visited", !!st.visited[p.id])
-      const letter = hits ? String.fromCharCode(65 + hits.indexOf(p.id)) : ""
+      const letter = hits ? String.fromCharCode(65 + hits.indexOf(p.id)) : trip?.ids.includes(p.id) ? String(trip.ids.indexOf(p.id) + 1) : ""
       if (b.dataset.letter !== letter) { b.dataset.letter = letter; b.classList.toggle("lettered", !!letter) }
       b.hidden = false; boxesPins.push([g.x - 16, g.y - 16, g.x + 16, g.y + 16])
       if (st.labels && (z > 2.2 || p.cat === "district" && z > 1.35 || p.id === selected)) labels.push({ p, x: g.x, y: g.y })
@@ -441,15 +445,16 @@ const stack = []
 const top = () => stack[stack.length - 1]
 function push(v) { stack.push(v); showSheet() }
 function closeSheet() {
-  stack.length = 0; selected = null; hits = null; sheet.classList.remove("peek"); sheet.classList.remove("open", "full"); document.body.classList.remove("sheet-open")
+  stack.length = 0; selected = null; hits = null; trip = null; drawRouteLine(); sheet.classList.remove("peek"); sheet.classList.remove("open", "full"); document.body.classList.remove("sheet-open")
   history.replaceState(null, "", location.pathname + location.search); queue()
 }
 function back() { stack.pop(); stack.length ? showSheet() : closeSheet() }
 function showSheet() {
   const v = top()
   sheet.classList.add("open"); document.body.classList.add("sheet-open")
-  sheet.classList.toggle("full", v.type === "search" || v.type === "list" || v.type === "layers")
+  sheet.classList.toggle("full", v.type === "search" || v.type === "list" || v.type === "layers" || v.type === "route")
   if (v.type !== "search") { hits = null; sheet.classList.remove("peek") }
+  if (!stack.some(x => x.type === "route")) { trip = null; drawRouteLine() }
   const backBtn = stack.length > 1 ? `<button class="round" id="sBack" aria-label="Back">${icon("back")}</button>` : ""
   const close = `<button class="round" id="sClose" aria-label="Close">${icon("close")}</button>`
   selected = v.type === "place" || v.type === "pin" ? v.id : null
@@ -468,6 +473,7 @@ function showSheet() {
     else if (v.type === "mission") drawMission(v)
     else if (v.type === "collectible") drawCollectible(v)
     else if (v.type === "list") drawList(v)
+    else if (v.type === "route") drawRoute(v)
     else if (v.type === "layers") drawLayers(v)
     else if (v.type === "pin") drawPin(v)
   }
@@ -589,8 +595,28 @@ function drawRegion(v) {
   body.innerHTML = `<div class="ph"><span class="ic" style="--c:${r.color}">${icon("region")}</span><div><h2>${esc(r.name)}</h2><p>Inspired by ${esc(r.inspiration)}</p></div></div>
     <p class="note">${esc(r.blurb)}</p>
     <div class="bar"><i style="width:${items.length ? seen / items.length * 100 : 0}%"></i></div><p class="fine">${seen} of ${items.length} visited</p>
+    ${routeStops(r.id).length > 1 ? `<div class="actions"><button class="act wide" id="plan">${icon("pin")}Plan a route</button></div>` : ""}
     <p class="sec">Places</p><div class="group">${items.sort((a, b) => prio(a) - prio(b) || a.name.localeCompare(b.name)).map(placeRow).join("")}</div>`
   wire()
+  const plan = $("#plan"); if (plan) plan.onclick = () => push({ type: "route", id: r.id })
+}
+// a run through what's left in a region: unvisited pins you can see, in the shortest order
+const routeStops = id => pinned.filter(p => p.region === id && p.cat !== "people" && p.cat !== "vehicle" && !st.visited[p.id] && !st.hidden.includes(p.cat))
+function drawRouteLine() {
+  const line = $("#route")
+  if (line) line.setAttribute("d", trip ? "M" + trip.ids.map(id => [place[id].x, place[id].y]).join("L") : "")
+}
+function drawRoute(v) {
+  const r = region[v.id], stops = tour(routeStops(v.id))
+  trip = { region: v.id, ids: stops.map(p => p.id) }
+  const km = pathLength(stops) * (data.metresPerUnit || 15) / 1000
+  body.innerHTML = `<div class="ph"><span class="ic" style="--c:${r.color}">${icon("pin")}</span><div><h2>Route through ${esc(r.short)}</h2><p>${stops.length} stops · about ${km < 10 ? km.toFixed(1) : Math.round(km)} km</p></div></div>
+    <p class="note">The shortest order through every place you haven't visited, as the crow flies. Tick places off as you go and plan again.</p>
+    <div class="group">${stops.map((p, i) => placeRow(p, String(i + 1))).join("")}</div>`
+  wire(); drawRouteLine()
+  const wide = innerWidth >= 900
+  if (!wide) sheet.classList.add("peek")
+  zoomToItems(stops, wide ? 110 : innerHeight * .4 + 110); queue()
 }
 function drawMission(v) {
   const m = mission[v.id], at = m.at && place[m.at]

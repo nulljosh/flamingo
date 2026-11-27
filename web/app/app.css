@@ -46,6 +46,7 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .cover.forest { fill: var(--forest); } .cover.wetland { fill: var(--wetland); } .cover.farm { fill: var(--farm); } .cover.city { fill: var(--city); }
 .street { fill: none; stroke: var(--street); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity .3s; }
 .streets-on .street { opacity: .9; }
+.route { fill: none; stroke: var(--pink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 7; vector-effect: non-scaling-stroke; }
 .region-edge { fill: none; stroke: var(--coast); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; opacity: .8; }
 .urban { fill: var(--urban); }
 .beach { fill: none; stroke: #f4e7b8; stroke-width: 2; vector-effect: non-scaling-stroke; opacity: .0; }

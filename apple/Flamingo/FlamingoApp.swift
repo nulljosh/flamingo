@@ -135,6 +135,7 @@ struct RootView: View {
                 case "place": model.open(.place(p[1]))
                 case "region": model.open(.region(p[1]))
                 case "list": model.open(.list(p[1]))
+                case "trip": model.open(.trip(p[1]))
                 default: break
                 }
             }

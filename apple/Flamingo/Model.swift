@@ -6,6 +6,7 @@ struct Leonida: Decodable {
     let updated: String
     let size: [Double]
     let disclaimer: String
+    let metresPerUnit: Double?   // game metres per map unit
     let map: Geo
     let regions: [Region]
     let categories: [Category]

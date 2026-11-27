@@ -215,6 +215,7 @@ chapters.forEach(([title, list], ci) => list.forEach((s, mi) => {
 const data = {
   version: 2, updated: "2026-11-27", size: [W, H],
   disclaimer: "Unofficial fan map. Not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Pins are approximate.",
+  metresPerUnit: +(1 / geo.transform.ax).toFixed(2),   // game metres per map unit, for route lengths
   credits: "Map and landmark positions: GTA VI Map Tiles and Landmarks Data (CC BY 4.0), map.gtadb.org. Traced and simplified.",
   map,
   regions, categories, places, missions,
