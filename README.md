@@ -45,6 +45,9 @@ node tests/landing.mjs                 # landing page at phone and desktop sizes
 ## Data
 Place names come from Rockstar's trailers and official site, cross-checked against the community maps (gtamapped.com, timesaver.gg, gtaside.com). Rockstar hasn't published a map, so the geography is drawn by hand and pins are approximate. Found a wrong pin? Email [info@jaybulb.com](mailto:info@jaybulb.com?subject=Flamingo).
 
+## Map data
+The coastline, lakes and region borders are traced from the GTADB map tiles, and many pin positions come from the GTADB landmarks: "GTA VI Map Tiles and Landmarks Data (CC BY 4.0) — https://map.gtadb.org". `scripts/trace-coast.py` does the tracing (changes made: traced, simplified, regrouped into six regions).
+
 ## Not affiliated
 Unofficial fan project. Not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of Take-Two Interactive.
 

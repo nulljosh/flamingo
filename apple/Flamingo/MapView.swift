@@ -20,9 +20,9 @@ final class MapModel: ObservableObject {
     var fitS: CGFloat = 1
     var sheetInset: CGFloat = 0
 
-    // the land's bounds, Keys included
+    // the land's bounds, islands and Keys included
     static let bounds: CGRect = {
-        let pts = D.data.map.land + D.data.map.keys.map { [$0[0], $0[1]] }
+        let pts = D.data.map.land + D.data.map.islands.flatMap(\.pts)
         let xs = pts.map { $0[0] }, ys = pts.map { $0[1] }
         return CGRect(x: xs.min()! - 20, y: ys.min()! - 20, width: xs.max()! - xs.min()! + 40, height: ys.max()! - ys.min()! + 50)
     }()
@@ -178,7 +178,9 @@ struct MapLayer: View, Animatable {
     static let cover: [(Path, String)] = [("mount-kalaga", "forest"), ("grassrivers", "wetland"), ("ambrosia", "farm"), ("vice-city", "city")].compactMap { id, kind in
         D.regions[id].map { (polygon($0.poly), kind) }
     }
-    static let towns: [CGRect] = [[812, 830, 70, 90], [170, 390, 46, 38], [660, 568, 36, 28], [316, 770, 22, 18], [482, 704, 22, 16]].map { CGRect(x: $0[0] - $0[2], y: $0[1] - $0[3], width: $0[2] * 2, height: $0[3] * 2) }
+    static let towns: [CGRect] = D.data.map.towns.map { CGRect(x: $0[0] - $0[2], y: $0[1] - $0[3], width: $0[2] * 2, height: $0[3] * 2) }
+    static let lakes = D.data.map.lakes.map { smoothPath($0.pts) }
+    static let streets = Path { p in for l in D.data.map.streets where l.count > 1 { p.move(to: CGPoint(x: l[0][0], y: l[0][1])); for q in l.dropFirst() { p.addLine(to: CGPoint(x: q[0], y: q[1])) } } }
 
     var dark: Bool { scheme == .dark }
     func c(_ light: String, _ darkHex: String) -> Color { Color(hex: dark ? darkHex : light) }
@@ -261,21 +263,10 @@ struct MapLayer: View, Animatable {
             for (p, kind) in Self.cover { l.fill(p, with: .color(fills[kind]!)) }
             if st.regions { for r in D.data.regions { l.fill(polygon(r.poly), with: .color(r.tint.opacity(dark ? 0.2 : 0.16))) } }
             for t in Self.towns { l.fill(Path(ellipseIn: t), with: .color(c("#e9ecef", "#26292e"))) }
-            if z > 3 {
-                var grid = Path()
-                for (i, t) in Self.towns.enumerated() {
-                    let step: CGFloat = [9, 8, 7, 6, 6][i]
-                    var x = t.minX; while x <= t.maxX { grid.move(to: CGPoint(x: x, y: t.minY)); grid.addLine(to: CGPoint(x: x + t.height * 0.06, y: t.maxY)); x += step }
-                    var y = t.minY; while y <= t.maxY { grid.move(to: CGPoint(x: t.minX, y: y)); grid.addLine(to: CGPoint(x: t.maxX, y: y - t.width * 0.03)); y += step }
-                }
-                var clipped = l
-                clipped.clip(to: Path { p in for t in Self.towns { p.addEllipse(in: t) } })
-                clipped.stroke(grid, with: .color(c("#ffffff", "#3a4047")), lineWidth: lw)
-            }
+            if z > 1.8 { l.stroke(Self.streets, with: .color(c("#c3ccd6", "#3f464e")), style: StrokeStyle(lineWidth: lw, lineCap: .round, lineJoin: .round)) }
         }
         ctx.stroke(Self.land, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: 1.4 * lw)
-        for l in D.data.map.lakes {
-            let e = Path(ellipseIn: CGRect(x: l.cx - l.rx, y: l.cy - l.ry, width: l.rx * 2, height: l.ry * 2))
+        for e in Self.lakes {
             ctx.fill(e, with: .color(c("#c2e7ee", "#07202a"))); ctx.stroke(e, with: .color(c("#a9cfd8", "#2c3640")), lineWidth: lw)
         }
         for r in Self.roads { ctx.stroke(r, with: .color(c("#dde3e8", "#2a2f35")), style: StrokeStyle(lineWidth: 5 * lw, lineCap: .round)) }

@@ -1,7 +1,8 @@
 // Brand kit QA: full-page screenshots light and dark, every image and the mark load.
 import { createRequire } from "node:module"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
+import { existsSync } from "node:fs"
+const require = createRequire([`${homedir()}/Documents/Code/epiphany`, `${homedir()}/Documents/Josh/Code/epiphany`].find(d => existsSync(`${d}/node_modules/playwright`)) + "/package.json")   // Mac Mini, then this Mac
 const { chromium } = require("playwright")
 const base = process.argv[2] || "http://localhost:8790"
 const b = await chromium.launch({ channel: "chrome", headless: true })

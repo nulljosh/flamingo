@@ -4,7 +4,8 @@
 import { createRequire } from "node:module"
 import { mkdirSync } from "node:fs"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
+import { existsSync } from "node:fs"
+const require = createRequire([`${homedir()}/Documents/Code/epiphany`, `${homedir()}/Documents/Josh/Code/epiphany`].find(d => existsSync(`${d}/node_modules/playwright`)) + "/package.json")   // Mac Mini, then this Mac
 const { chromium, devices } = require("playwright")
 
 const base = process.argv[2] || "http://localhost:8790", out = process.argv[3] || "docs/img/qa"
@@ -36,7 +37,7 @@ for (const theme of ["light", "dark"]) {
   check((await page.locator(".pin:not([hidden])").count()) >= 4, `${theme}: tapping a region shows its pins`)
   await shot(page, `phone-region-${theme}`)
   // zoom into Vice City: pins split out of clusters and labels show
-  await page.evaluate(() => { const f = window.flamingo, w = innerWidth, h = innerHeight, s = f.view.s * 5.2; f.setView({ s, x: w / 2 - 840 * s, y: h * .42 - 826 * s }) })
+  await page.evaluate(() => { const f = window.flamingo, w = innerWidth, h = innerHeight, s = f.view.s * 5.2; f.setView({ s, x: w / 2 - 866 * s, y: h * .42 - 612 * s }) })
   await page.waitForTimeout(500)
   check((await page.locator(".plabel:not([hidden])").count()) > 3, `${theme}: labels show when zoomed in`)
   await shot(page, `phone-vicecity-${theme}`)

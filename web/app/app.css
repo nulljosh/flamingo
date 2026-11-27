@@ -3,7 +3,7 @@
 :root {
   --pink: #ff3d8b; --pink-ink: #d0186b;
   --bg: #f2f2f7; --card: #ffffff; --text: #1d1d1f; --text2: #6e6e73; --text3: #aeaeb2; --sep: rgba(60, 60, 67, .14); --fill: rgba(120, 120, 128, .12);
-  --water: #c2e7ee; --water2: #dff3f6; --land: #f7f8f9; --coast: #a9cfd8; --road: #ffffff; --road-edge: #dde3e8; --urban: #e9ecef; --label: #3a3a3c; --label-halo: rgba(255, 255, 255, .9);
+  --water: #c2e7ee; --water2: #dff3f6; --land: #f7f8f9; --coast: #a9cfd8; --road: #ffffff; --road-edge: #dde3e8; --street: #c3ccd6; --urban: #e9ecef; --label: #3a3a3c; --label-halo: rgba(255, 255, 255, .9);
   --tint: .16; --forest: #d4ebcb; --wetland: #d2ece6; --farm: #e4f0d2; --city: #e8ebef; --sand: #ffffff;
   --glass: rgba(255, 255, 255, .42); --glass-strong: rgba(255, 255, 255, .78); --glass-edge: rgba(255, 255, 255, .75); --glass-line: rgba(0, 0, 0, .06);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .08);
@@ -15,7 +15,7 @@
 :root[data-theme="dark"] {
   --pink: #ff5fa2; --pink-ink: #ff7ab5;
   --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --text2: #a1a1a6; --text3: #636366; --sep: rgba(84, 84, 88, .45); --fill: rgba(120, 120, 128, .24);
-  --water: #07202a; --water2: #0b2a35; --land: #1d2024; --coast: #2c3640; --road: #3a4047; --road-edge: #2a2f35; --urban: #26292e; --label: #d1d1d6; --label-halo: rgba(0, 0, 0, .75);
+  --water: #07202a; --water2: #0b2a35; --land: #1d2024; --coast: #2c3640; --road: #3a4047; --road-edge: #2a2f35; --street: #3f464e; --urban: #26292e; --label: #d1d1d6; --label-halo: rgba(0, 0, 0, .75);
   --tint: .2; --forest: #1c3021; --wetland: #18302d; --farm: #252d20; --city: #26292e; --sand: #2a2d31;
   --glass: rgba(30, 30, 32, .44); --glass-strong: rgba(36, 36, 40, .8); --glass-edge: rgba(255, 255, 255, .14); --glass-line: rgba(255, 255, 255, .06);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
@@ -44,7 +44,7 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .tints .region { opacity: var(--tint); }
 .cover { stroke: none; }
 .cover.forest { fill: var(--forest); } .cover.wetland { fill: var(--wetland); } .cover.farm { fill: var(--farm); } .cover.city { fill: var(--city); }
-.street { fill: none; stroke: var(--road); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity .3s; }
+.street { fill: none; stroke: var(--street); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity .3s; }
 .streets-on .street { opacity: .9; }
 .region-edge { fill: none; stroke: var(--coast); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; opacity: .8; }
 .urban { fill: var(--urban); }

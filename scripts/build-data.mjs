@@ -1,58 +1,44 @@
 // Builds web/data/leonida.json, the one data file every app reads (web, iPhone, iPad, Mac).
 // Run: node scripts/build-data.mjs
 // Sources: Rockstar's official GTA VI site and trailers, cross-checked against gtamapped.com, timesaver.gg and
-// gtaside.com (Nov 2026). Pins are approximate: Rockstar has not published a map, so the
-// geography here is drawn by hand. `tag` says how sure we are: confirmed (named by Rockstar), spotted (seen in official
+// gtaside.com (Nov 2026). Geography and many pin positions: GTA VI Map Tiles and Landmarks Data (CC BY 4.0),
+// https://map.gtadb.org, traced into our own shapes by scripts/trace-coast.py (scripts/geo/leonida-geo.json). `tag` says how sure we are: confirmed (named by Rockstar), spotted (seen in official
 // footage, named by signage), speculation (fan read).
-import { writeFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 
 const W = 1000, H = 1200
 
-// Map geometry, in a 1000 x 1200 plane. Shapes are polygons; every renderer smooths them the same way (Catmull-Rom).
-const land = [[150,110],[230,96],[300,90],[390,104],[480,100],[565,88],[650,85],[740,98],[820,110],[870,124],[905,150],[912,196],[900,240],[888,290],[885,340],[893,392],[890,440],[880,492],[872,540],[868,590],[860,640],[852,682],[845,720],[842,760],[835,800],[826,842],[815,880],[800,918],[785,950],[760,978],[730,1000],[700,1012],[670,1015],[640,1006],[610,990],[575,975],[540,960],[505,948],[470,930],[435,906],[400,880],[362,852],[330,820],[306,782],[290,740],[272,696],[260,650],[254,604],[250,560],[238,522],[220,490],[196,462],[170,440],[140,420],[110,400],[86,376],[70,350],[60,316],[60,280],[72,240],[90,200],[104,166],[120,140]]
-const islands = [
-  { id: "vice-beach", pts: [[896,690],[908,716],[917,760],[916,808],[908,858],[894,906],[878,936],[868,930],[880,890],[892,844],[898,800],[899,756],[892,716]] },
-  { id: "starfish", pts: [[866,872],[880,866],[888,878],[878,890],[864,886]] },
-  { id: "venetian", pts: [[858,808],[876,804],[880,814],[862,818]] },
-]
-// the Keys: ellipses [cx, cy, rx, ry, rotation degrees]
-const keys = [[702,1046,22,8,-28],[662,1070,24,8,-22],[612,1090,28,9,-16],[556,1105,26,9,-10],[498,1116,28,8,-6],[440,1122,24,8,-2],[384,1122,22,7,4],[330,1114,20,7,10],[284,1102,14,6,16]]
-const lakes = [{ id: "lake-leonida", cx: 560, cy: 432, rx: 72, ry: 50 }]
-const roads = [
-  { id: "i-404", name: "Interstate 404", pts: [[160,380],[260,340],[380,330],[470,360],[560,386],[640,400],[740,420],[860,430]] },
-  { id: "i-95", name: "Interstate (east coast)", pts: [[880,170],[860,300],[858,440],[840,600],[812,720],[800,820],[790,920]] },
-  { id: "tamiami", name: "Grassrivers crossing", pts: [[310,760],[420,770],[540,780],[660,780],[760,790],[830,800]] },
-  { id: "causeway", name: "Vice Beach causeway", pts: [[835,812],[858,812],[880,810],[904,808]] },
-  { id: "keys-causeway", name: "Keys Causeway", pts: [[730,1000],[702,1046],[662,1070],[612,1090],[556,1105],[498,1116],[440,1122],[384,1122],[330,1114],[284,1102]] },
-  { id: "kalaga-road", name: "Kalaga parkway", pts: [[640,400],[620,320],[560,240],[470,190],[340,170]] },
-]
+// Map geometry in a 1000 x 1200 plane, traced from the GTADB tiles. Every renderer smooths shapes the same way (Catmull-Rom)
+// and clips the region tints to the land.
+const geo = JSON.parse(readFileSync(new URL("geo/leonida-geo.json", import.meta.url)))
+const map = {
+  land: geo.land,
+  islands: geo.islands.map((pts, i) => ({ id: `island-${i + 1}`, pts })),
+  lakes: geo.lakes.map((pts, i) => ({ id: i === 0 ? "lake-leonida" : `lake-${i + 1}`, pts })),
+  towns: geo.towns, streets: geo.streets, keys: [], roads: [],
+}
 
 const regions = [
-  { id: "mount-kalaga", name: "Mount Kalaga National Park", short: "Mount Kalaga", color: "#34c759", label: [520, 236],
+  { id: "mount-kalaga", name: "Mount Kalaga National Park", short: "Mount Kalaga", color: "#34c759", label: geo.labels["mount-kalaga"],
     blurb: "Forest, canyon and wilderness across the north of the state. Hunting grounds and off-road trails.",
-    inspiration: "The forests and red-clay canyons of north Florida and Georgia",
-    poly: [[0,0],[1000,0],[1000,330],[700,360],[560,384],[420,360],[300,300],[0,280]] },
-  { id: "port-gellhorn", name: "Port Gellhorn", short: "Port Gellhorn", color: "#5ac8fa", label: [200, 470],
+    inspiration: "The forests and red-clay canyons of north Florida and Georgia" },
+  { id: "port-gellhorn", name: "Port Gellhorn", short: "Port Gellhorn", color: "#5ac8fa", label: geo.labels["port-gellhorn"],
     blurb: "A run-down Gulf Coast port town in the north-west: motels, strip malls and the docks.",
-    inspiration: "Panama City and the Florida Panhandle",
-    poly: [[0,280],[300,300],[380,420],[360,620],[0,620]] },
-  { id: "ambrosia", name: "Ambrosia", short: "Ambrosia", color: "#ffcc00", label: [660, 520],
+    inspiration: "Panama City and the Florida Panhandle" },
+  { id: "ambrosia", name: "Ambrosia", short: "Ambrosia", color: "#ffcc00", label: geo.labels["ambrosia"],
     blurb: "Inland farm county built around the Allied Crystal sugar refinery, on the south shore of Lake Leonida.",
-    inspiration: "Lake Okeechobee and Clewiston",
-    poly: [[300,300],[420,360],[560,384],[700,360],[1000,330],[1000,680],[780,700],[620,660],[360,620],[380,420]] },
-  { id: "grassrivers", name: "Grassrivers", short: "Grassrivers", color: "#00c7be", label: [450, 850],
+    inspiration: "Lake Okeechobee and Clewiston" },
+  { id: "grassrivers", name: "Grassrivers", short: "Grassrivers", color: "#00c7be", label: geo.labels["grassrivers"],
     blurb: "Sawgrass, mangroves and gator country in the south-west. Airboats, mud bogs and small Gulf towns.",
-    inspiration: "The Everglades",
-    poly: [[0,620],[360,620],[620,660],[700,760],[690,1000],[0,1000]] },
-  { id: "vice-city", name: "Vice City", short: "Vice City", color: "#ff3d8b", label: [770, 740],
+    inspiration: "The Everglades" },
+  { id: "vice-city", name: "Vice City", short: "Vice City", color: "#ff3d8b", label: geo.labels["vice-city"],
     blurb: "Leonida's big city on the east coast: downtown towers, the port, and the beaches across the bay.",
-    inspiration: "Miami and Miami Beach",
-    poly: [[620,660],[780,700],[1000,680],[1000,1000],[690,1000],[700,760]] },
-  { id: "leonida-keys", name: "Leonida Keys", short: "The Keys", color: "#32ade6", label: [470, 1160],
+    inspiration: "Miami and Miami Beach" },
+  { id: "leonida-keys", name: "Leonida Keys", short: "The Keys", color: "#32ade6", label: geo.labels["leonida-keys"],
     blurb: "An island chain off the southern tip, tied together by one long causeway. Jason's home turf.",
-    inspiration: "The Florida Keys",
-    poly: [[0,1000],[1000,1000],[1000,1200],[0,1200]] },
+    inspiration: "The Florida Keys" },
 ]
+for (const r of regions) r.poly = geo.regions[r.id]
 
 const categories = [
   { id: "district", name: "Neighbourhoods & towns", one: "Neighbourhood", color: "#8e8e93", symbol: "building.2.fill" },
@@ -76,105 +62,105 @@ const categories = [
 // [id, name, category, region, x, y, tag, note, at?]   at = the place it belongs to (vehicles, people)
 const P = [
   // Vice City
-  ["downtown-vice-city","Downtown Vice City","district","vice-city",832,822,"spotted","The skyscraper core on the bay, across the causeway from Vice Beach."],
-  ["crosstown","Crosstown","district","vice-city",806,758,"spotted","North of downtown, where the two interstates meet. Named on official road signs."],
-  ["little-cuba","Little Cuba","district","vice-city",796,850,"confirmed","Bakeries, cafes and the city's Cuban community."],
-  ["stockyard","Stockyard","district","vice-city",770,796,"confirmed","Streetwear shops and tattoo parlours."],
-  ["southside","Southside","district","vice-city",776,906,"confirmed","Gang-run blocks on the south side of the city. One crew's compound can be raided."],
-  ["vice-beach","Vice Beach","district","vice-city",904,780,"spotted","The barrier island across the bay from downtown. Ocean Beach is its southern end."],
-  ["ocean-beach","Ocean Beach","district","vice-city",902,836,"confirmed","White sand, palms and art deco hotels along Shore Drive. Chapter 4 opens here."],
-  ["washington-beach","Washington Beach","nature","vice-city",908,744,"confirmed","The beach north of Ocean Beach, where the Shitzu Squalo is moored."],
-  ["shore-drive","Shore Drive","landmark","vice-city",907,852,"confirmed","The beachfront strip of hotels, bars and supercars through Ocean Beach."],
-  ["ocean-view-hotel","Ocean View Hotel","landmark","vice-city",909,822,"confirmed","Beachfront hotel shown with Jason and Lucia, a nod to the original Vice City."],
-  ["hotel-dixon","Hotel Dixon","landmark","vice-city",905,842,"spotted","Ocean Beach hotel from the first trailer's opening shots."],
-  ["the-boardwalk","The Boardwalk","landmark","vice-city",910,862,"spotted","Hotel with a neon tower on Shore Drive."],
-  ["dominion-hotel","Dominion Hotel","landmark","vice-city",906,806,"spotted","Ocean Beach hotel seen in the second trailer."],
-  ["shore-court-garage","Shore Court Garage","safehouse","vice-city",897,848,"confirmed","Garage off Shore Drive with a weapon locker. Fence stolen goods here."],
-  ["venetian-islands","Venetian Islands","district","vice-city",868,811,"speculation","Small residential islands strung along the causeway. Fan name."],
-  ["sahara-arena","Sahara Arena","landmark","vice-city",848,806,"spotted","The arena on the downtown waterfront, beside the causeway."],
-  ["nine-1-nine","NINE 1 NINE","business","vice-city",838,832,"spotted","Downtown megaclub."],
-  ["vc-port","Port of Vice City","transport","vice-city",856,862,"confirmed","The cruise ship capital of the world, says Rockstar."],
-  ["vci-airport","Vice City International","transport","vice-city",728,770,"spotted","VCI airport, signposted from the freeway in the first trailer."],
-  ["tisha-wocka","Tisha-Wocka Flea Market","business","vice-city",752,862,"confirmed","Bootleg brands by the stall."],
-  ["jack-of-hearts","Jack of Hearts","business","vice-city",814,842,"confirmed","Boobie Ike's strip club."],
-  ["only-raw-records","Only Raw Records","business","vice-city",792,826,"confirmed","Boobie Ike's label and studio, run day to day by Dre'Quan Priest."],
-  ["rideout-customs","Rideout Customs","store","vice-city",746,884,"confirmed","Classic cars, big rims and donk builds."],
-  ["saras-salon","Sara's Unisex Salon","store","vice-city",780,838,"confirmed","Hair and beauty, with signature looks for Jason and Lucia."],
-  ["electric-fang","Electric Fang Tattoo","store","vice-city",764,792,"confirmed","Tattoo parlour in Stockyard, with designs by the artist duo FAILE."],
-  ["stock-305","Stock 305","store","vice-city",760,806,"confirmed","Streetwear store in Stockyard."],
-  ["ptt-hideout","PTT Youngin$ Hideout","activity","vice-city",784,918,"confirmed","A loud crew's base in Southside. Raid it for contraband."],
-  ["vercetti-estate","Vercetti Estate","landmark","vice-city",876,878,"confirmed","Tommy Vercetti's old mansion on Starfish Island."],
-  ["shitzu-squalo","Shitzu Squalo","vehicle","vice-city",914,734,"confirmed","Speedboat built for fishing trips out to Gambit Bay.","washington-beach"],
-  ["vapid-stanier-55","'55 Vapid Stanier","vehicle","vice-city",892,854,"confirmed","1950s car kept at Shore Court Garage.","shore-court-garage"],
+  ["downtown-vice-city","Downtown Vice City","district","vice-city",704,675,"spotted","The skyscraper core on the bay, across the causeway from Vice Beach."],
+  ["crosstown","Crosstown","district","vice-city",712,601,"spotted","North of downtown, where the two interstates meet. Named on official road signs."],
+  ["little-cuba","Little Cuba","district","vice-city",670,670,"confirmed","Bakeries, cafes and the city's Cuban community."],
+  ["stockyard","Stockyard","district","vice-city",726,545,"confirmed","Streetwear shops and tattoo parlours."],
+  ["southside","Southside","district","vice-city",628,808,"confirmed","Gang-run blocks on the south side of the city. One crew's compound can be raided."],
+  ["vice-beach","Vice Beach","district","vice-city",860,593,"spotted","The barrier island across the bay from downtown. Ocean Beach is its southern end."],
+  ["ocean-beach","Ocean Beach","district","vice-city",868,620,"confirmed","White sand, palms and art deco hotels along Shore Drive. Chapter 4 opens here."],
+  ["washington-beach","Washington Beach","nature","vice-city",865,519,"confirmed","The beach north of Ocean Beach, where the Shitzu Squalo is moored."],
+  ["shore-drive","Shore Drive","landmark","vice-city",881,631,"confirmed","The beachfront strip of hotels, bars and supercars through Ocean Beach."],
+  ["ocean-view-hotel","Ocean View Hotel","landmark","vice-city",882,624,"confirmed","Beachfront hotel shown with Jason and Lucia, a nod to the original Vice City."],
+  ["hotel-dixon","Hotel Dixon","landmark","vice-city",883,618,"spotted","Ocean Beach hotel from the first trailer's opening shots."],
+  ["the-boardwalk","The Boardwalk","landmark","vice-city",881,629,"spotted","Hotel with a neon tower on Shore Drive."],
+  ["dominion-hotel","Dominion Hotel","landmark","vice-city",886,606,"spotted","Ocean Beach hotel seen in the second trailer."],
+  ["shore-court-garage","Shore Court Garage","safehouse","vice-city",870,627,"confirmed","Garage off Shore Drive with a weapon locker. Fence stolen goods here."],
+  ["venetian-islands","Venetian Islands","district","vice-city",797,630,"speculation","Small residential islands strung along the causeway. Fan name."],
+  ["sahara-arena","Sahara Arena","landmark","vice-city",728,637,"spotted","The arena on the downtown waterfront, beside the causeway."],
+  ["nine-1-nine","NINE 1 NINE","business","vice-city",704,636,"spotted","Downtown megaclub."],
+  ["vc-port","Port of Vice City","transport","vice-city",798,703,"confirmed","The cruise ship capital of the world, says Rockstar."],
+  ["vci-airport","Vice City International","transport","vice-city",593,716,"spotted","VCI airport, signposted from the freeway in the first trailer."],
+  ["tisha-wocka","Tisha-Wocka Flea Market","business","vice-city",560,619,"confirmed","Bootleg brands by the stall."],
+  ["jack-of-hearts","Jack of Hearts","business","vice-city",703,586,"confirmed","Boobie Ike's strip club."],
+  ["only-raw-records","Only Raw Records","business","vice-city",645,723,"confirmed","Boobie Ike's label and studio, run day to day by Dre'Quan Priest."],
+  ["rideout-customs","Rideout Customs","store","vice-city",690,601,"confirmed","Classic cars, big rims and donk builds."],
+  ["saras-salon","Sara's Unisex Salon","store","grassrivers",576,900,"confirmed","Hair and beauty, with signature looks for Jason and Lucia."],
+  ["electric-fang","Electric Fang Tattoo","store","vice-city",724,543,"confirmed","Tattoo parlour in Stockyard, with designs by the artist duo FAILE."],
+  ["stock-305","Stock 305","store","vice-city",727,548,"confirmed","Streetwear store in Stockyard."],
+  ["ptt-hideout","PTT Youngin$ Hideout","activity","vice-city",633,792,"confirmed","A loud crew's base in Southside. Raid it for contraband."],
+  ["vercetti-estate","Vercetti Estate","landmark","vice-city",811,623,"confirmed","Tommy Vercetti's old mansion on Starfish Island."],
+  ["shitzu-squalo","Shitzu Squalo","vehicle","vice-city",867,544,"confirmed","Speedboat built for fishing trips out to Gambit Bay.","washington-beach"],
+  ["vapid-stanier-55","'55 Vapid Stanier","vehicle","vice-city",857,632,"confirmed","1950s car kept at Shore Court Garage.","shore-court-garage"],
   // Leonida Keys
-  ["jasons-house","Jason's House, Key Lento","safehouse","leonida-keys",556,1105,"confirmed","Jason's place in the Keys, rent-free from Brian Heder in exchange for work."],
-  ["brians-boat-yard","Brian's Boat Yard","business","leonida-keys",612,1090,"confirmed","Brian Heder's boat yard, a front for running drugs by water."],
-  ["keys-causeway","Keys Causeway","transport","leonida-keys",662,1070,"spotted","The island-hopping road, named on a sign in the second trailer."],
-  ["keys-billboard","Welcome to the Keys billboard","landmark","leonida-keys",704,1040,"confirmed","The roadside billboard that opens the launch trailer."],
-  ["corsair-key-dolphin","Triangular Sculpture","waink","leonida-keys",440,1122,"confirmed","A dolphin sculpture on Corsair Key."],
-  ["dinka-enduro","Dinka Enduro","vehicle","leonida-keys",562,1097,"confirmed","Dual-sport motorcycle parked at Jason's.","jasons-house"],
-  ["crest-kayak","Crest Kayak","vehicle","leonida-keys",548,1114,"confirmed","For the shallows around the Keys.","jasons-house"],
-  ["key-lento","Key Lento","district","leonida-keys",585,1096,"confirmed","The Keys' main island, home to Jason's house and Brian's boat yard."],
-  ["rusty-anchor","The Rusty Anchor","business","leonida-keys",574,1112,"confirmed","Beachfront bar on Key Lento, seen in Rockstar's screenshots with Jason and Cal."],
-  ["wonder-whale","Wonder Whale","landmark","leonida-keys",596,1104,"spotted","A Key Lento spot named in a Rockstar street screenshot."],
-  ["key-lento-pd","Key Lento Police Department","landmark","leonida-keys",604,1086,"spotted","Key Lento's police station, named in a Rockstar screenshot."],
+  ["jasons-house","Jason's House, Key Lento","safehouse","leonida-keys",589,1044,"confirmed","Jason's place in the Keys, rent-free from Brian Heder in exchange for work."],
+  ["brians-boat-yard","Brian's Boat Yard","business","leonida-keys",577,1066,"confirmed","Brian Heder's boat yard, a front for running drugs by water."],
+  ["keys-causeway","Keys Causeway","transport","leonida-keys",624,1033,"spotted","The island-hopping road, named on a sign in the second trailer."],
+  ["keys-billboard","Welcome to the Keys billboard","landmark","leonida-keys",605,1020,"confirmed","The roadside billboard that opens the launch trailer."],
+  ["corsair-key-dolphin","Triangular Sculpture","waink","leonida-keys",448,1130,"confirmed","A dolphin sculpture on Corsair Key."],
+  ["dinka-enduro","Dinka Enduro","vehicle","leonida-keys",578,1056,"confirmed","Dual-sport motorcycle parked at Jason's.","jasons-house"],
+  ["crest-kayak","Crest Kayak","vehicle","leonida-keys",568,1069,"confirmed","For the shallows around the Keys.","jasons-house"],
+  ["key-lento","Key Lento","district","leonida-keys",578,1070,"confirmed","The Keys' main island, home to Jason's house and Brian's boat yard."],
+  ["rusty-anchor","The Rusty Anchor","business","leonida-keys",595,1025,"confirmed","Beachfront bar on Key Lento, seen in Rockstar's screenshots with Jason and Cal."],
+  ["wonder-whale","Wonder Whale","landmark","leonida-keys",550,1104,"spotted","A Key Lento spot named in a Rockstar street screenshot."],
+  ["key-lento-pd","Key Lento Police Department","landmark","leonida-keys",582,1065,"spotted","Key Lento's police station, named in a Rockstar screenshot."],
   // Grassrivers
-  ["watson-bay","Watson Bay","district","grassrivers",312,770,"confirmed","A small Gulf town on stilts and docks, home of Paradise Garage."],
-  ["paradise-garage","Paradise Garage","safehouse","grassrivers",322,778,"confirmed","Garage in Watson Bay with a weapon locker."],
-  ["the-bite-house","The Bite House","business","grassrivers",304,760,"spotted","Waterfront restaurant in Watson Bay."],
-  ["dominator-buggy","'67 Vapid Dominator Buggy","vehicle","grassrivers",330,786,"confirmed","Off-road buggy made for the Mount Kalaga trails.","paradise-garage"],
-  ["gambit-bay","Gambit Bay","nature","grassrivers",470,952,"confirmed","The first named fishing spot, a boat ride from Washington Beach."],
-  ["hamlet","Hamlet","district","grassrivers",478,698,"confirmed","Small town named in the first trailer."],
-  ["boone-speedway","Boone Speedway","race","grassrivers",492,712,"confirmed","Oval track in Hamlet."],
-  ["airboat-trails","Grassrivers airboat trails","activity","grassrivers",540,830,"confirmed","Airboat runs through sawgrass and mangroves, gators in the water."],
-  ["mud-bog","Grassrivers mud bog","activity","grassrivers",410,676,"spotted","The muddy off-road party from the first trailer."],
-  ["airgator-airboats","Airgator Airboats","store","grassrivers",522,846,"spotted","Airboat outfitter for getting across the wetlands."],
-  ["hamlet-water-tower","Hamlet Water Tower","landmark","grassrivers",470,700,"spotted","Water tower over the Hamlet area."],
+  ["watson-bay","Watson Bay","district","grassrivers",412,888,"confirmed","A small Gulf town on stilts and docks, home of Paradise Garage."],
+  ["paradise-garage","Paradise Garage","safehouse","grassrivers",471,832,"confirmed","Garage in Watson Bay with a weapon locker."],
+  ["the-bite-house","The Bite House","business","grassrivers",414,866,"spotted","Waterfront restaurant in Watson Bay."],
+  ["dominator-buggy","'67 Vapid Dominator Buggy","vehicle","grassrivers",470,853,"confirmed","Off-road buggy made for the Mount Kalaga trails.","paradise-garage"],
+  ["gambit-bay","Gambit Bay","nature","leonida-keys",560,1024,"confirmed","The first named fishing spot, a boat ride from Washington Beach."],
+  ["hamlet","Hamlet","district","grassrivers",566,885,"confirmed","Small town named in the first trailer."],
+  ["boone-speedway","Boone Speedway","race","grassrivers",539,897,"confirmed","Oval track in Hamlet."],
+  ["airboat-trails","Grassrivers airboat trails","activity","grassrivers",664,976,"confirmed","Airboat runs through sawgrass and mangroves, gators in the water."],
+  ["mud-bog","Grassrivers mud bog","activity","grassrivers",493,841,"spotted","The muddy off-road party from the first trailer."],
+  ["airgator-airboats","Airgator Airboats","store","grassrivers",549,977,"spotted","Airboat outfitter for getting across the wetlands."],
+  ["hamlet-water-tower","Hamlet Water Tower","landmark","grassrivers",547,877,"spotted","Water tower over the Hamlet area."],
   // Port Gellhorn
-  ["port-gellhorn","Port Gellhorn","district","port-gellhorn",152,384,"confirmed","Working port town on the Gulf. Chapter 2 starts here."],
-  ["gellhorn-docks","Port Gellhorn Docks","transport","port-gellhorn",118,398,"spotted","The working seaport on the town's bay."],
-  ["starlet-motel","Starlet Motel","safehouse","port-gellhorn",184,362,"spotted","Roadside motel from both trailers. A safehouse."],
-  ["gellhorn-station","Port Gellhorn Station","transport","port-gellhorn",168,396,"confirmed","Named in the Port Gellhorn section of Rockstar's site."],
-  ["hanks-waffles","Hank's Waffles","business","port-gellhorn",164,372,"spotted","Diner sign from the trailers."],
-  ["gellhorn-roadhouse","Gellhorn Roadhouse","business","port-gellhorn",196,376,"spotted","Roadhouse sign from the trailers."],
-  ["schlott-construction","Schlott Construction","business","port-gellhorn",132,372,"spotted","Construction firm sign from the trailers."],
-  ["burnout-scooters","Burnout Scooters","store","port-gellhorn",144,366,"spotted","Scooter shop sign from the trailers."],
-  ["happy-nails","Happy Nails","store","port-gellhorn",172,352,"spotted","Nail salon sign from the trailers."],
-  ["watkins-auto-parts","Watkins Auto Parts","store","port-gellhorn",204,390,"spotted","Auto parts store sign from the trailers."],
-  ["we-have-shoes","We Have Shoes","store","port-gellhorn",156,356,"spotted","Shoe store sign from the trailers."],
-  ["uncle-jacks","Uncle Jack's Liquor","store","port-gellhorn",196,372,"spotted","Liquor store on the motel strip."],
-  ["pawn-gun","Port Gellhorn Pawn & Gun","store","port-gellhorn",166,414,"spotted","Pawn and gun shop where the first trailer's robbery ends."],
-  ["delights-cabaret","Delights Cabaret","business","port-gellhorn",178,398,"spotted","Strip club."],
-  ["crossroad-minimall","Crossroad Park Minimall","store","port-gellhorn",252,348,"spotted","Strip mall on Interstate 404."],
-  ["interstate-404","Interstate 404","transport","port-gellhorn",300,330,"spotted","The interstate east out of town, signposted in the second trailer."],
-  ["bocamar-bridge","Bocamar Bridge","transport","port-gellhorn",96,452,"speculation","Tall suspension bridge in the trailer backgrounds."],
-  ["abandoned-motel","Abandoned beach motel","landmark","port-gellhorn",72,322,"spotted","A storm-wrecked motel on the beach."],
-  ["gellhorn-raceway","Gellhorn International Raceway","race","port-gellhorn",236,444,"confirmed","Race track outside town."],
-  ["gellhorn-outfitters","Gellhorn Outfitters","weapons","port-gellhorn",206,424,"confirmed","Ammu-Nation in Port Gellhorn."],
-  ["gellhorn-fun-fair","Gellhorn Fun Fair","waink","port-gellhorn",136,350,"confirmed","A WAiNK scan at the fairground."],
-  ["rodgers-ranch","Rodgers Ranch & Shooting Range","weapons","port-gellhorn",300,286,"confirmed","North-east of Port Gellhorn, in Kelly County."],
-  ["thrillbilly-mud-club","Thrillbilly Mud Club","race","port-gellhorn",340,328,"confirmed","Mud racing off Route 32, Kelly County."],
+  ["port-gellhorn","Port Gellhorn","district","port-gellhorn",302,410,"confirmed","Working port town on the Gulf. Chapter 2 starts here."],
+  ["gellhorn-docks","Port Gellhorn Docks","transport","port-gellhorn",293,409,"spotted","The working seaport on the town's bay."],
+  ["starlet-motel","Starlet Motel","safehouse","port-gellhorn",385,431,"spotted","Roadside motel from both trailers. A safehouse."],
+  ["gellhorn-station","Port Gellhorn Station","transport","port-gellhorn",300,423,"confirmed","Named in the Port Gellhorn section of Rockstar's site."],
+  ["hanks-waffles","Hank's Waffles","business","port-gellhorn",329,360,"spotted","Diner sign from the trailers."],
+  ["gellhorn-roadhouse","Gellhorn Roadhouse","business","port-gellhorn",324,403,"spotted","Roadhouse sign from the trailers."],
+  ["schlott-construction","Schlott Construction","business","port-gellhorn",328,365,"spotted","Construction firm sign from the trailers."],
+  ["burnout-scooters","Burnout Scooters","store","port-gellhorn",311,442,"spotted","Scooter shop sign from the trailers."],
+  ["happy-nails","Happy Nails","store","port-gellhorn",317,405,"spotted","Nail salon sign from the trailers."],
+  ["watkins-auto-parts","Watkins Auto Parts","store","port-gellhorn",311,445,"spotted","Auto parts store sign from the trailers."],
+  ["we-have-shoes","We Have Shoes","store","port-gellhorn",317,403,"spotted","Shoe store sign from the trailers."],
+  ["uncle-jacks","Uncle Jack's Liquor","store","port-gellhorn",317,405,"spotted","Liquor store on the motel strip."],
+  ["pawn-gun","Port Gellhorn Pawn & Gun","store","port-gellhorn",318,439,"spotted","Pawn and gun shop where the first trailer's robbery ends."],
+  ["delights-cabaret","Delights Cabaret","business","port-gellhorn",316,425,"spotted","Strip club."],
+  ["crossroad-minimall","Crossroad Park Minimall","store","port-gellhorn",319,401,"spotted","Strip mall on Interstate 404."],
+  ["interstate-404","Interstate 404","transport","port-gellhorn",417,364,"spotted","The interstate east out of town, signposted in the second trailer."],
+  ["bocamar-bridge","Bocamar Bridge","transport","port-gellhorn",292,358,"speculation","Tall suspension bridge in the trailer backgrounds."],
+  ["abandoned-motel","Abandoned beach motel","landmark","port-gellhorn",239,353,"spotted","A storm-wrecked motel on the beach."],
+  ["gellhorn-raceway","Gellhorn International Raceway","race","port-gellhorn",292,510,"confirmed","Race track outside town."],
+  ["gellhorn-outfitters","Gellhorn Outfitters","weapons","port-gellhorn",291,394,"confirmed","Ammu-Nation in Port Gellhorn."],
+  ["gellhorn-fun-fair","Gellhorn Fun Fair","waink","port-gellhorn",304,389,"confirmed","A WAiNK scan at the fairground."],
+  ["rodgers-ranch","Rodgers Ranch & Shooting Range","weapons","port-gellhorn",421,320,"confirmed","North-east of Port Gellhorn, in Kelly County."],
+  ["thrillbilly-mud-club","Thrillbilly Mud Club","race","port-gellhorn",477,344,"confirmed","Mud racing off Route 32, Kelly County."],
   // Ambrosia
-  ["ambrosia-town","Ambrosia","district","ambrosia",648,560,"confirmed","Company town under the refinery's smoke."],
-  ["allied-crystal","Allied Crystal Sugar Refinery","landmark","ambrosia",688,584,"confirmed","The giant refinery that employs most of Ambrosia."],
-  ["lake-leonida","Lake Leonida","nature","ambrosia",560,432,"confirmed","The biggest lake in the state, between Ambrosia and Mount Kalaga."],
-  ["one-eyed-willies","One-Eyed Willie's","store","ambrosia",606,476,"confirmed","Off-road mod shop on the lake."],
-  ["leonida-penitentiary","Leonida Penitentiary","landmark","ambrosia",772,514,"confirmed","The state prison where Lucia served time."],
-  ["final-chapter-mc","Final Chapter MC clubhouse","landmark","ambrosia",712,626,"speculation","Expected home of the Final Chapter biker club."],
-  ["ambrosia-water-tower","Ambrosia water tower","landmark","ambrosia",660,544,"spotted","Stands over the town in a night aerial shot."],
-  ["cane-fields","Sugar cane fields","nature","ambrosia",540,560,"spotted","Cane fields that feed the refinery, shown burning."],
+  ["ambrosia-town","Ambrosia","district","ambrosia",551,394,"confirmed","Company town under the refinery's smoke."],
+  ["allied-crystal","Allied Crystal Sugar Refinery","landmark","ambrosia",553,421,"confirmed","The giant refinery that employs most of Ambrosia."],
+  ["lake-leonida","Lake Leonida","nature","ambrosia",615,346,"confirmed","The biggest lake in the state, between Ambrosia and Mount Kalaga."],
+  ["one-eyed-willies","One-Eyed Willie's","store","ambrosia",624,284,"confirmed","Off-road mod shop on the lake."],
+  ["leonida-penitentiary","Leonida Penitentiary","landmark","port-gellhorn",406,543,"confirmed","The state prison where Lucia served time."],
+  ["final-chapter-mc","Final Chapter MC clubhouse","landmark","ambrosia",620,458,"speculation","Expected home of the Final Chapter biker club."],
+  ["ambrosia-water-tower","Ambrosia water tower","landmark","ambrosia",549,379,"spotted","Stands over the town in a night aerial shot."],
+  ["cane-fields","Sugar cane fields","nature","ambrosia",614,434,"spotted","Cane fields that feed the refinery, shown burning."],
   // Mount Kalaga
-  ["kalaga-trails","Mount Kalaga off-road trails","activity","mount-kalaga",404,206,"confirmed","Hill trails for trucks and buggies."],
-  ["kalaga-hunting","Hunting in Mount Kalaga","activity","mount-kalaga",660,178,"confirmed","Hunting grounds in the state's wildest corner."],
-  ["kalaga-canyon","Mount Kalaga canyon","nature","mount-kalaga",300,172,"spotted","A red-clay canyon."],
-  ["kalaga-rail-bridge","Mount Kalaga rail bridge","transport","mount-kalaga",524,262,"spotted","Rail bridge over the river through the park."],
-  ["old-mining-depot","Old mining depot","landmark","mount-kalaga",766,204,"spotted","Abandoned mine buildings deep in the park."],
-  ["kalaga-lookout","Kalaga Lookout","waink","mount-kalaga",586,140,"confirmed","A WAiNK scan on a peak."],
-  ["spanish-ruins","Imperial Spanish Ruins","waink","mount-kalaga",336,250,"confirmed","A WAiNK scan on the south-west peak."],
-  ["kalaga-reservoir","Kalaga Reservoir","nature","mount-kalaga",480,172,"confirmed","Reservoir in the park."],
-  ["jutting-cliff","Jutting Cliff","meditation","mount-kalaga",476,138,"confirmed","Meditation spot just north of Kalaga Reservoir."],
-  ["lawton-paper-mill","Lawton Co. Paper Mill","waink","mount-kalaga",214,196,"confirmed","A WAiNK scan in Moreau."],
-  ["gas-west-kalaga","247 Gas, West Kalaga","store","mount-kalaga",226,214,"confirmed","Gas station near the paper mill."],
+  ["kalaga-trails","Mount Kalaga off-road trails","activity","mount-kalaga",501,242,"confirmed","Hill trails for trucks and buggies."],
+  ["kalaga-hunting","Hunting in Mount Kalaga","activity","mount-kalaga",697,194,"confirmed","Hunting grounds in the state's wildest corner."],
+  ["kalaga-canyon","Mount Kalaga canyon","nature","mount-kalaga",418,213,"spotted","A red-clay canyon."],
+  ["kalaga-rail-bridge","Mount Kalaga rail bridge","transport","mount-kalaga",594,243,"spotted","Rail bridge over the river through the park."],
+  ["old-mining-depot","Old mining depot","landmark","mount-kalaga",697,194,"spotted","Abandoned mine buildings deep in the park."],
+  ["kalaga-lookout","Kalaga Lookout","waink","mount-kalaga",656,156,"confirmed","A WAiNK scan on a peak."],
+  ["spanish-ruins","Imperial Spanish Ruins","waink","mount-kalaga",427,262,"confirmed","A WAiNK scan on the south-west peak."],
+  ["kalaga-reservoir","Kalaga Reservoir","nature","mount-kalaga",552,211,"confirmed","Reservoir in the park."],
+  ["jutting-cliff","Jutting Cliff","meditation","mount-kalaga",550,175,"confirmed","Meditation spot just north of Kalaga Reservoir."],
+  ["lawton-paper-mill","Lawton Co. Paper Mill","waink","mount-kalaga",350,244,"confirmed","A WAiNK scan in Moreau."],
+  ["gas-west-kalaga","247 Gas, West Kalaga","store","mount-kalaga",362,260,"confirmed","Gas station near the paper mill."],
   // named, but where they sit is not known yet
   ["vinewood-beach","Vinewood Beach","meditation",null,null,null,"confirmed","Seaside meditation spot in Waning Sands."],
   ["leaf-links","Leaf Links Golf Club","activity",null,null,null,"confirmed","Mini golf here counts toward 100%. Full courses don't."],
@@ -226,24 +212,11 @@ chapters.forEach(([title, list], ci) => list.forEach((s, mi) => {
     name: name || null, who: who ? [...who].map(c => c === "J" ? "Jason" : "Lucia") : [], heist, ...(at ? { at } : {}) })
 }))
 
-// a natural coast: split each edge twice and nudge the new points sideways, seeded so every build is identical
-function roughen(pts, iters = 2, amp = 9, seed = 7) {
-  let r = seed
-  const rand = () => (r = (r * 16807) % 2147483647) / 2147483647 - .5
-  for (let k = 0; k < iters; k++, amp *= .5) {
-    const out = []
-    pts.forEach((p, i) => {
-      const q = pts[(i + 1) % pts.length], dx = q[0] - p[0], dy = q[1] - p[1], len = Math.hypot(dx, dy) || 1, j = rand() * amp
-      out.push(p, [Math.round((p[0] + q[0]) / 2 - dy / len * j), Math.round((p[1] + q[1]) / 2 + dx / len * j)])
-    })
-    pts = out
-  }
-  return pts
-}
 const data = {
-  version: 1, updated: "2026-11-24", size: [W, H],
+  version: 2, updated: "2026-11-27", size: [W, H],
   disclaimer: "Unofficial fan map. Not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Pins are approximate.",
-  map: { land: roughen(land), islands: islands.map((i, n) => ({ ...i, pts: i.pts.length > 8 ? roughen(i.pts, 1, 4, 11 + n) : i.pts })), keys, lakes, roads },
+  credits: "Map and landmark positions: GTA VI Map Tiles and Landmarks Data (CC BY 4.0), map.gtadb.org. Traced and simplified.",
+  map,
   regions, categories, places, missions,
   collectibles: collectibles.map(([id, name, total, note]) => ({ id, name, total, note })),
 }

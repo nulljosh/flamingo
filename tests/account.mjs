@@ -3,7 +3,8 @@
 // node tests/account.mjs [web=http://localhost:8790] [api=http://localhost:8787]
 import { createRequire } from "node:module"
 import { homedir } from "node:os"
-const require = createRequire(`${homedir()}/Documents/Code/epiphany/package.json`)
+import { existsSync } from "node:fs"
+const require = createRequire([`${homedir()}/Documents/Code/epiphany`, `${homedir()}/Documents/Josh/Code/epiphany`].find(d => existsSync(`${d}/node_modules/playwright`)) + "/package.json")   // Mac Mini, then this Mac
 const { chromium, devices } = require("playwright")
 const web = process.argv[2] || "http://localhost:8790", api = process.argv[3] || "http://localhost:8787"
 let fails = 0

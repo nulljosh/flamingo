@@ -19,9 +19,11 @@ struct Leonida: Decodable {
         let keys: [[Double]]
         let lakes: [Lake]
         let roads: [Road]
+        let towns: [[Double]]   // built-up areas: cx, cy, rx, ry, street spacing
+        let streets: [[[Double]]]   // traced street lines
     }
     struct Island: Decodable { let id: String; let pts: [[Double]] }
-    struct Lake: Decodable { let id: String; let cx, cy, rx, ry: Double }
+    struct Lake: Decodable { let id: String; let pts: [[Double]] }
     struct Road: Decodable { let id: String; let name: String; let pts: [[Double]] }
 
     static let shared: Leonida = {

@@ -46,9 +46,10 @@ struct SettingsView: View {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
                     LabeledContent("Map data", value: D.data.updated)
                     Link("Source code", destination: URL(string: "https://github.com/nulljosh/flamingo")!)
+                    Link("Map data: GTADB (CC BY 4.0)", destination: URL(string: "https://map.gtadb.org")!)
                     Link("Report a wrong pin", destination: URL(string: "mailto:info@jaybulb.com?subject=Flamingo%20map")!)
                 } header: { Text("About") } footer: {
-                    Text("\(D.data.disclaimer) Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps.")
+                    Text("\(D.data.disclaimer) Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps. Coastline and many pin positions: GTADB map tiles and landmarks (CC BY 4.0, map.gtadb.org), traced and simplified.")
                 }
                 Color.clear.frame(height: 60).listRowBackground(Color.clear)
             }

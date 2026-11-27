@@ -20,7 +20,7 @@ const pinned = data.places.filter(p => p.x != null)
 const mapCats = data.categories.filter(c => pinned.some(p => p.cat === c.id))
 
 // ---------- settings and progress, kept on this device ----------
-const VERSION = "2.0.0"
+const VERSION = "3.2.0"
 let hits = null   // place ids matching the search, shown as lettered pins while the search is open
 const KEY = "flamingo.v1"
 const DEF = { fav: {}, pins: [], recentQ: [], recentP: [], hinted: false, savePct: "", theme: "system", labels: true, regions: false, cluster: true, spoilers: false, hideVisited: false, hidden: [], visited: {}, done: {}, found: {} }
@@ -149,17 +149,11 @@ function drawWorld() {
   el("polygon", { class: "terrain", points: region["mount-kalaga"].poly.join(" "), fill: "url(#forest)" }, tint)
   el("polygon", { class: "terrain", points: region.grassrivers.poly.join(" "), fill: "url(#marsh)" }, tint)
   // built-up areas around the towns
-  ;[[812, 830, 70, 90], [170, 390, 46, 38], [660, 568, 36, 28], [316, 770, 22, 18], [482, 704, 22, 16]].forEach(([cx, cy, rx, ry]) => el("ellipse", { class: "urban", cx, cy, rx, ry, opacity: .9 }, tint))
-  data.regions.forEach(r => r.id !== "leonida-keys" && el("polyline", { class: "region-edge", points: r.poly.filter(([x, y]) => x > 0 && x < 1000 && y > 0 && y < 1000).join(" ") }, tint))
-  const streets = el("g", { "clip-path": "url(#landclip)" }, w)
-  ;[[812, 830, 70, 90, 9], [170, 390, 46, 38, 8], [660, 568, 36, 28, 7], [316, 770, 22, 18, 6], [482, 704, 22, 16, 6]].forEach(([cx, cy, rx, ry, step], i) => {
-    const id = `town${i}`, c = el("clipPath", { id }, defs); el("ellipse", { cx, cy, rx, ry }, c)
-    const g = el("g", { "clip-path": `url(#${id})` }, streets); let d = ""
-    for (let x = cx - rx; x <= cx + rx; x += step) d += `M${x},${cy - ry}L${x + ry * .12},${cy + ry}`
-    for (let y = cy - ry; y <= cy + ry; y += step) d += `M${cx - rx},${y}L${cx + rx},${y - rx * .06}`
-    el("path", { class: "street", d }, g)
-  })
-  m.lakes.forEach(l => el("ellipse", { class: "lake", cx: l.cx, cy: l.cy, rx: l.rx, ry: l.ry }, w))
+  m.towns.forEach(([cx, cy, rx, ry]) => el("ellipse", { class: "urban", cx, cy, rx, ry, opacity: .9 }, tint))
+  data.regions.forEach(r => el("polygon", { class: "region-edge", points: r.poly.join(" "), fill: "none" }, tint))
+  // real streets, traced from the GTADB tiles; they fade in once you zoom past the overview
+  el("path", { class: "street", d: m.streets.map(l => "M" + l.join("L")).join(""), "clip-path": "url(#landclip)" }, w)
+  m.lakes.forEach(l => el("path", { class: "lake", d: smooth(l.pts) }, w))
   const roads = el("g", {}, w)
   m.roads.forEach(r => el("path", { class: "road-edge", d: smooth(r.pts, false) }, roads))
   m.roads.forEach(r => el("path", { class: "road", d: smooth(r.pts, false) }, roads))
@@ -170,8 +164,8 @@ const mapEl = $("#map"), world = $("#world")
 const view = { s: 1, x: 0, y: 0 }
 let fitS = 1
 const size = () => ({ w: mapEl.clientWidth, h: mapEl.clientHeight })
-// the land's bounds, Keys included, so the fit fills the screen with land rather than sea
-const B = (() => { const pts = [...data.map.land, ...data.map.keys.map(k => [k[0], k[1]])]; const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return { x0: Math.min(...xs) - 20, y0: Math.min(...ys) - 20, x1: Math.max(...xs) + 20, y1: Math.max(...ys) + 30 } })()
+// the land's bounds, islands and Keys included, so the fit fills the screen with land rather than sea
+const B = (() => { const pts = [...data.map.land, ...data.map.islands.flatMap(i => i.pts)]; const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return { x0: Math.min(...xs) - 20, y0: Math.min(...ys) - 20, x1: Math.max(...xs) + 20, y1: Math.max(...ys) + 30 } })()
 function fitView(pad = { t: 64, b: 104, l: 8, r: 8 }) {
   const { w, h } = size(), bw = B.x1 - B.x0, bh = B.y1 - B.y0
   const wide = w >= 900 && document.body.classList.contains("sheet-open")
@@ -360,7 +354,7 @@ function render() {
   const z = view.s / fitS
   // zoomed out: one card per region instead of a cloud of pins
   const overview = z < OVERVIEW && !filter && !selected && !hits
-  mapEl.classList.toggle("streets-on", z > 3)
+  mapEl.classList.toggle("streets-on", z > 1.8)
   for (const { r, d, c } of rlabels) {
     const t = `translate(${view.x + r.label[0] * view.s}px, ${view.y + r.label[1] * view.s}px) translate(-50%, -50%)`
     d.style.transform = t; c.style.transform = t
@@ -713,7 +707,7 @@ function drawSettings() {
       <a class="row link" href="/brand/"><span class="t"><b>Brand kit</b></span></a>
       <a class="row link" href="mailto:info@jaybulb.com?subject=Flamingo%20map"><span class="t"><b>Report a wrong pin</b></span></a>
     </div>
-    <p class="foot">${esc(data.disclaimer)} Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps.</p>`
+    <p class="foot">${esc(data.disclaimer)} Grand Theft Auto is a trademark of Take-Two Interactive. Place names come from Rockstar's trailers and site, cross-checked against community maps. Coastline and many pin positions: <a href="https://map.gtadb.org" target="_blank" rel="noopener">GTADB</a> map tiles and landmarks (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>), traced and simplified.</p>`
   const b = $("#settingsBody")
   wireAcct(b)
   b.querySelectorAll("[data-theme]").forEach(x => x.onclick = () => { st.theme = x.dataset.theme; save(false); applyTheme(); drawSettings() })

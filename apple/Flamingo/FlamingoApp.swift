@@ -44,13 +44,17 @@ struct RootView: View {
                 .ignoresSafeArea(.container, edges: .bottom)
             if tab == .story { StoryView().transition(.opacity) }
             if tab == .settings { SettingsView().transition(.opacity) }
-            if tab == .map && store.s.hinted != true && (!store.isQA || ProcessInfo.processInfo.arguments.contains("-qaHint")) { hint.padding(.bottom, 92).transition(.move(edge: .bottom).combined(with: .opacity)) }
-            dock.padding(.bottom, 8)
+            if tab == .map && store.s.hinted != true && (!store.isQA || ProcessInfo.processInfo.arguments.contains("-qaHint")) { hint.padding(.bottom, 92).padding(.trailing, inspectorInset).transition(.move(edge: .bottom).combined(with: .opacity)) }
+            dock.padding(.bottom, 8).padding(.trailing, inspectorInset)
         }
         .background(Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.027, green: 0.125, blue: 0.165, alpha: 1) : UIColor(red: 0.761, green: 0.906, blue: 0.933, alpha: 1) }).ignoresSafeArea())
         .animation(.easeInOut(duration: 0.22), value: tab)
+        .animation(.easeInOut(duration: 0.22), value: inspectorInset)
         .onAppear(perform: qa)
     }
+
+    // iPad: the inspector column takes the right edge, so centre the dock in the map column beside it
+    private var inspectorInset: CGFloat { hsize == .regular && tab == .map && model.route != nil ? 380 : 0 }
 
     @State private var detentValue: PresentationDetent = .height(340)
     private var detent: Binding<PresentationDetent> {
